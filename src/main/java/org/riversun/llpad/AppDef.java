@@ -120,13 +120,15 @@ public class AppDef {
 		 * than from the middle of the sentence.<br>
 		 * <br>
 		 * <br>
-		 * However, if {@link #PAGE_INCREMENT_SIZE_BYTES} is too small, you
-		 * know, if the length of one sentence in a specified text file is
-		 * longer than {@link #PAGE_INCREMENT_SIZE_BYTES}, if you try to flip
-		 * the page, you can not detect line feed in the sentence ,and,as a
+		 * However, if {@link AppDef.TextViewRange#PAGE_INCREMENT_SIZE_BYTES} is
+		 * too small, you know, if the length of one sentence in a specified
+		 * text file is longer than
+		 * {@link AppDef.TextViewRange#PAGE_INCREMENT_SIZE_BYTES}, if you try to
+		 * flip the page, you can not detect line feed in the sentence ,and,as a
 		 * result, the page can not be flipped.<br>
-		 * Therefore, it is necessary to set {@link #PAGE_INCREMENT_SIZE_BYTES}
-		 * to be sufficiently larger than the length of one sentence.
+		 * Therefore, it is necessary to set
+		 * {@link AppDef.TextViewRange#PAGE_INCREMENT_SIZE_BYTES} to be
+		 * sufficiently larger than the length of one sentence.
 		 */
 		public static final boolean SHOW_PRETTY_SENTENCES = true;
 	}
