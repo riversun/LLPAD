@@ -134,7 +134,7 @@ public class AppMain {
 	 * @param viewStartAddr
 	 *            starting address of view
 	 */
-	public void openFile(GUIBuilder gui, File file, long viewStartAddr) {
+	public void openFile(final GUIBuilder gui, final File file,final long viewStartAddr) {
 
 		mHandler.post(new Runnable() {
 
