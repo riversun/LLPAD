@@ -34,14 +34,16 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.text.Document;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.riversun.llpad.AppDef;
 import org.riversun.llpad.R;
 import org.riversun.llpad.widget.component.DiagTextArea;
 import org.riversun.llpad.widget.component.VerticalSeekBar;
+import org.riversun.llpad.widget.component.VerticalSeekBar4Common;
+import org.riversun.llpad.widget.component.VerticalSeekBar4Windows;
 import org.riversun.llpad.widget.helper.EDTHandler;
 import org.riversun.llpad.widget.helper.JLinearLayout;
 import org.riversun.llpad.widget.helper.JLinearLayout.Orientation;
@@ -157,7 +159,11 @@ public class GUIBuilder {
 				mScrollpane.setBorder(null);
 				mScrollpane.setBackground(R.color.Window_TextArea_Background);
 
-				mVerticalSeekBar = new VerticalSeekBar(JScrollBar.VERTICAL);
+				if (SystemUtils.IS_OS_WINDOWS) {
+					mVerticalSeekBar = new VerticalSeekBar4Windows();
+				} else {
+					mVerticalSeekBar = new VerticalSeekBar4Common();
+				}
 
 				middleArea.addView(mScrollpane, 1.0d);
 				middleArea.addView(mVerticalSeekBar, 0.00d);

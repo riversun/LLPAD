@@ -30,6 +30,7 @@ import java.awt.event.MouseEvent;
 import java.util.logging.Logger;
 
 import javax.swing.JScrollBar;
+import javax.swing.plaf.ScrollBarUI;
 
 /**
  * Vertical scroll bar that can handle long type value.
@@ -40,7 +41,7 @@ import javax.swing.JScrollBar;
  * 
  */
 @SuppressWarnings("serial")
-public class VerticalSeekBar extends JScrollBar {
+public abstract class VerticalSeekBar extends JScrollBar {
 
 	private static final Logger LOGGER = Logger.getLogger(VerticalSeekBar.class.getName());
 
@@ -88,21 +89,21 @@ public class VerticalSeekBar extends JScrollBar {
 	private static final int DEFAULT_MAX_INT_VALUE = Integer.MAX_VALUE;
 	private static final int DEFAULT_MIN_INT_VALUE = 0;
 
-	private AdjustmentListener mSafeAdjustmentListener;
-	private TrackAreaEventListener mTrackAreaEventListener;
-	private VScrollBarEvent mVScrollBarEvent;
+	protected AdjustmentListener mSafeAdjustmentListener;
+	protected TrackAreaEventListener mTrackAreaEventListener;
+	protected VScrollBarEvent mVScrollBarEvent;
 
-	private long mMaxLongValue = 0;
-	private long mLongValue = 0;
-	private boolean mIsThumbDragging = false;
-	private int mMaxIntValue = DEFAULT_MAX_INT_VALUE;
+	protected long mMaxLongValue = 0;
+	protected long mLongValue = 0;
+	protected boolean mIsThumbDragging = false;
+	protected int mMaxIntValue = DEFAULT_MAX_INT_VALUE;
 
-	public VerticalSeekBar(int orientation) {
+	public VerticalSeekBar() {
 
-		super(orientation);
+		super(JScrollBar.VERTICAL);
 
 		setEnabled(false);
-		setUI(new VerticalSeekBarUI());
+		setUI(createUI());
 		setValue(0);
 		setBlockIncrement(0);
 		setUnitIncrement(0);
@@ -216,161 +217,7 @@ public class VerticalSeekBar extends JScrollBar {
 		super.setValue(value);
 	}
 
-	/**
-	 * TODO for general use,use javax.swing.plaf.basic.BasicScrollBarUI
-	 *
-	 */
-	private class VerticalSeekBarUI extends com.sun.java.swing.plaf.windows.WindowsScrollBarUI {
-
-		@Override
-		protected ArrowButtonListener createArrowButtonListener() {
-
-			return new _ArrowButtonListener();
-		}
-
-		private class _ArrowButtonListener extends ArrowButtonListener {
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-
-				if (mTrackAreaEventListener != null) {
-
-					TrackClickEventType trackType = null;
-
-					if (e.getSource() == incrButton) {
-						// down arrow clicked
-						trackType = TrackClickEventType.ARROW_DOWN;
-
-						LOGGER.finer("seekbar arrow button clicked " + trackType);
-					}
-					else if (e.getSource() == decrButton) {
-						// up arrow clicked
-						trackType = TrackClickEventType.ARROW_UP;
-
-						LOGGER.finer("seekbar arrow button clicked " + trackType);
-					}
-
-					mTrackAreaEventListener.onTrackClicked(trackType);
-				}
-
-			}
-
-		}
-
-		@Override
-		protected TrackListener createTrackListener() {
-
-			return new _TrackListener();
-		}
-
-		private class _TrackListener extends javax.swing.plaf.basic.BasicScrollBarUI.TrackListener {
-			private int mPrevValue = -1;
-			private long mTravelDistance = 0;
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-				super.mousePressed(e);
-				LOGGER.fine("mousePressed THUMB-drag finished intValue=" + getValue() + "/" + mMaxIntValue);
-
-				// Rectanble of the Knob
-				final Rectangle knobBounds = getThumbBounds();
-
-				final boolean isMouseCursorInsideKnob = knobBounds.contains(currentMouseX, currentMouseY);
-
-				if (isMouseCursorInsideKnob) {
-					// When grasping the knob
-					mIsThumbDragging = true;
-					mPrevValue = getValue();
-				} else {
-					// When clicking the track area
-					mIsThumbDragging = false;
-
-					// TODO
-					// May add handling for repeating of track area scroll when
-					// long pressing.
-
-				}
-
-			}
-
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				super.mouseDragged(e);
-
-				if (mIsThumbDragging) {
-
-					mTravelDistance++;
-
-					if (mSafeAdjustmentListener != null) {
-
-						LOGGER.finer("seekbar THUMB-drag adjusting intValue=" + getValue() + "/" + mMaxIntValue);
-						mSafeAdjustmentListener.adjustmentValueChanged(null);
-
-					}
-				}
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-
-				super.mouseReleased(e);
-
-				if (mIsThumbDragging) {
-
-					final boolean isTraveled = (mTravelDistance > 0);
-
-					mTravelDistance = 0;
-
-					// When grasping the knob and moving it (dragging)
-					mIsThumbDragging = false;
-
-					if (mSafeAdjustmentListener != null) {
-						final int value = getValue();
-						if (mPrevValue != value || isTraveled) {
-							LOGGER.fine("seekbar THUMB-drag finished intValue=" + getValue() + "/" + mMaxIntValue);
-
-							mSafeAdjustmentListener.adjustmentValueChanged(null);
-						} else {
-							LOGGER.finer("seekbar THUMB-drag canceled.");
-						}
-					}
-					return;
-
-				} else {
-
-					// Rectanble of the Knob
-					final Rectangle knobBounds = getThumbBounds();
-
-					final int currentMouseY = e.getY();
-
-					// When not knobing knob
-					final boolean trackUpClicked = currentMouseY < knobBounds.y;
-					final boolean trackDownClicked = currentMouseY > knobBounds.y + knobBounds.height;
-
-					TrackClickEventType trackType = null;
-
-					if (trackUpClicked) {
-						trackType = TrackClickEventType.TRACK_UP;
-						LOGGER.finer("seekbar track area clicked " + trackType);
-
-					} else if (trackDownClicked) {
-						trackType = TrackClickEventType.TRACK_DOWN;
-						LOGGER.finer("seekbar track area clicked " + trackType);
-					}
-
-					if (mTrackAreaEventListener != null) {
-						mTrackAreaEventListener.onTrackClicked(trackType);
-					}
-				}
-			}
-
-		}
-
-	}
+	public abstract ScrollBarUI createUI();
 
 	/**
 	 * Returns the height of the knob
