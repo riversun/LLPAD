@@ -31,12 +31,14 @@ import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.riversun.llpad.AppDef;
 import org.riversun.llpad.R;
 import org.riversun.llpad.ui.GUIBuilder.GuiComponent;
 import org.riversun.llpad.util.file.TextFileInfoHelper;
 import org.riversun.llpad.widget.component.DiagTextArea.FileDropListener;
-import org.riversun.llpad.widget.helper.EDTHandler;
+import org.riversun.string_grabber.StringGrabber;
 
 /**
  * 
@@ -52,12 +54,23 @@ public class GUIFileOpenHandler {
 
 	private static final Logger LOGGER = Logger.getLogger(GUIFileOpenHandler.class.getName());
 
-	private final EDTHandler mHandler = new EDTHandler();
+	private static final String EXTENSIONS;
 
 	static {
+
 		UIManager.put("FileChooser.openDialogTitleText", R.getString(R.string.FileChooser__openDialogTitleText));
 		UIManager.put("FileChooser.cancelButtonText", R.getString(R.string.FileChooser__cancelButtonText));
 		UIManager.put("FileChooser.filesOfTypeLabelText", R.getString(R.string.FileChooser__filesOfTypeLabelText));
+
+		final StringGrabber sg = new StringGrabber();
+		sg.append("(");
+		for (String ext : AppDef.Common.TEXTFILE_EXTENSIONS) {
+			sg.append("*.").append(ext).append(",");
+		}
+		sg.removeTail();
+		sg.append(")");
+
+		EXTENSIONS = sg.toString();
 	}
 
 	public static interface FileSelectionListener {
@@ -87,6 +100,16 @@ public class GUIFileOpenHandler {
 			public void actionPerformed(ActionEvent e) {
 
 				final JFileChooser filechooser = new JFileChooser();
+
+				// In order to decide the order freely, erase all files
+				filechooser.setAcceptAllFileFilterUsed(false);
+				filechooser.setFileFilter(null);
+
+				// But,at the present , AllFiles is the top.
+				filechooser.addChoosableFileFilter(filechooser.getAcceptAllFileFilter());
+				filechooser.addChoosableFileFilter(
+						new FileNameExtensionFilter(R.getString(R.string.FileChooser__FILTER_TEXTFILES) + EXTENSIONS,
+								AppDef.Common.TEXTFILE_EXTENSIONS));
 
 				int selected = filechooser.showOpenDialog(views.frame);
 
