@@ -23,11 +23,13 @@
  */
 package org.riversun.llpad;
 
+import java.awt.Component;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -105,9 +107,15 @@ public class AppMain {
 				if (isTextFile) {
 					openFile(gui, file, 0);
 				} else {
-					// TODO
 					// Display on the dialog informing that only text files are
 					// supported now.
+
+					final Component parent = gui.getGuiComponent().frame;
+
+					JOptionPane.showMessageDialog(parent,
+							R.getString(R.string.FileChooser_Msg__THIS_FILE_IS_NOT_A_TEXT_FILE, file.getName()),
+							R.getString(R.string.FileChooser_Msg__COULD_NOT_OPEN_FILE),
+							JOptionPane.WARNING_MESSAGE);
 				}
 
 			}
@@ -134,7 +142,7 @@ public class AppMain {
 	 * @param viewStartAddr
 	 *            starting address of view
 	 */
-	public void openFile(final GUIBuilder gui, final File file,final long viewStartAddr) {
+	public void openFile(final GUIBuilder gui, final File file, final long viewStartAddr) {
 
 		mHandler.post(new Runnable() {
 
