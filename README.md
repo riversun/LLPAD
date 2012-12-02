@@ -14,7 +14,7 @@ It is licensed under [MIT](https://opensource.org/licenses/MIT).
 # Install
 ### For Windows
 Download Windows installer package  
-(java runtime is inclued)
+(all-in-one package)
 
 [![screenshot](https://riversun.github.io/img/llpad_icon.png
  "screenshot")](http://riversun.org/downloads/LLPAD-0.5.5.zip)
