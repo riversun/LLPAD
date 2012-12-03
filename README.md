@@ -16,8 +16,8 @@ It is licensed under [MIT](https://opensource.org/licenses/MIT).
 Download Windows installer package  
 (all-in-one package)
 
-[![screenshot](https://riversun.github.io/img/llpad_icon.png
- "screenshot")](http://riversun.org/downloads/LLPAD-0.5.5.zip)
+[![llpad](https://riversun.github.io/img/llpad_icon.png
+ "llpad")](http://riversun.org/downloads/LLPAD-0.5.5.zip)
 [download LLPAD v0.5.5](http://riversun.org/downloads/LLPAD-0.5.5.zip)
 
 Or You can download from maven or from Github and build yourself.
@@ -45,14 +45,28 @@ $ mvn clean install
 ```
 $ java -jar llpad-0.5.5-jar-with-dependencies.jar
 ```
-# Downloads
 
-## maven
-- You can add dependencies to maven pom.xml file.
-```xml
-<dependency>
-  <groupId>org.riversun</groupId>
-  <artifactId>llpad</artifactId>
-  <version>0.5.5</version>
-</dependency>
-```
+# Architecture Overview
+- LLPAD is not read the entire file at once.
+- So in order to correspond to a big file it reads a small part of the file into buffer(CachedArea).
+- The area to be displayed in the text area is called viewArea and displays a part of the buffer.
+- When the caret is moved, the viewArea also moves, and when the viewArea reaches the end of the buffer, the next area is read into the buffer.
+
+
+![screenshot](https://riversun.github.io/img/llpad_split_loading.png
+ "screenshot")
+
+ # Downloads
+
+ ## maven
+ - You can add dependencies to maven pom.xml file.
+ ```xml
+ <dependency>
+   <groupId>org.riversun</groupId>
+   <artifactId>llpad</artifactId>
+   <version>0.5.5</version>
+ </dependency>
+ ```
+
+ ## download jar
+ [llpad-0.5.5-jar-with-dependencies.jar](http://repo1.maven.org/maven2/org/riversun/llpad/0.5.5/llpad-0.5.5-jar-with-dependencies.jar)[[MD5]](http://repo1.maven.org/maven2/org/riversun/llpad/0.5.5/llpad-0.5.5-jar-with-dependencies.jar.md5)
