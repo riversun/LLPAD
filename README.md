@@ -60,6 +60,7 @@ $ java -jar llpad-0.5.5-jar-with-dependencies.jar
 
 ## maven
  - You can add dependencies to maven pom.xml file.
+
  ```xml
  <dependency>
    <groupId>org.riversun</groupId>
