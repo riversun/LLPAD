@@ -67,7 +67,7 @@ public class GUIFileOpenHandler {
 	 * @param views
 	 *            holder of GUI components
 	 */
-	public GUIFileOpenHandler(GuiComponent views) {
+	public GUIFileOpenHandler(final GuiComponent views) {
 
 		// set menu open event listener
 		views.menuOpen.addActionListener(new ActionListener() {

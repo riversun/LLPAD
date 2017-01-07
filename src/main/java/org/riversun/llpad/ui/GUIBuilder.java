@@ -179,7 +179,7 @@ public class GUIBuilder {
 	 * 
 	 * @param file
 	 */
-	public void setFile(File file) {
+	public void setFile(final File file) {
 
 		mHandler.post(new Runnable() {
 
