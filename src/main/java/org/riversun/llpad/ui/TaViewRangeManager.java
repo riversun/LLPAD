@@ -256,7 +256,7 @@ public class TaViewRangeManager implements JTextAreaEventListener, ViewRangeEven
 	}
 
 	@Override
-	public void onUpdateText(Text2Display text2disp, ECursorDir dir) {
+	public void onUpdateText(final Text2Display text2disp, final ECursorDir dir) {
 
 		// Cursor is absolute position of the caret
 		final long cursorAddr = mViewRange.getCursorAddress();
