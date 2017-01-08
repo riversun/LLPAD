@@ -30,10 +30,13 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.JFileChooser;
+import javax.swing.UIManager;
 
+import org.riversun.llpad.R;
 import org.riversun.llpad.ui.GUIBuilder.GuiComponent;
 import org.riversun.llpad.util.file.TextFileInfoHelper;
 import org.riversun.llpad.widget.component.DiagTextArea.FileDropListener;
+import org.riversun.llpad.widget.helper.EDTHandler;
 
 /**
  * 
@@ -48,6 +51,14 @@ import org.riversun.llpad.widget.component.DiagTextArea.FileDropListener;
 public class GUIFileOpenHandler {
 
 	private static final Logger LOGGER = Logger.getLogger(GUIFileOpenHandler.class.getName());
+
+	private final EDTHandler mHandler = new EDTHandler();
+
+	static {
+		UIManager.put("FileChooser.openDialogTitleText", R.getString(R.string.FileChooser__openDialogTitleText));
+		UIManager.put("FileChooser.cancelButtonText", R.getString(R.string.FileChooser__cancelButtonText));
+		UIManager.put("FileChooser.filesOfTypeLabelText", R.getString(R.string.FileChooser__filesOfTypeLabelText));
+	}
 
 	public static interface FileSelectionListener {
 		public void onFileSelected(boolean isTextFile, File file);
@@ -78,6 +89,7 @@ public class GUIFileOpenHandler {
 				final JFileChooser filechooser = new JFileChooser();
 
 				int selected = filechooser.showOpenDialog(views.frame);
+
 				if (selected == JFileChooser.APPROVE_OPTION) {
 
 					final File file = filechooser.getSelectedFile();
