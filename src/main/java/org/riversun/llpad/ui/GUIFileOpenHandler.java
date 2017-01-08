@@ -134,9 +134,13 @@ public class GUIFileOpenHandler {
 			@Override
 			public boolean canFileDrop(List<File> fileList) {
 				if (fileList.size() != 1) {
+					// Display prohibited mark when the user tries to drop
+					// multiple files
 					return false;
 				} else {
-					// manage file extension if needed.
+
+					// (manage file extension if needed.)
+
 					return true;
 				}
 
