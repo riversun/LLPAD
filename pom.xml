@@ -5,7 +5,7 @@
 
 	<groupId>org.riversun</groupId>
 	<artifactId>llpad</artifactId>
-	<version>0.5.0</version>
+	<version>0.5.5</version>
 	<packaging>jar</packaging>
 	<name>LLPAD</name>
 	<description>Lightweight text file viewer for huge file bigger than 10GiB

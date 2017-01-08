@@ -5,7 +5,7 @@ REM In case creating msi installer, Download WiX 3.0 or later from http://wix.sf
 
 echo off
 
-set APP_VERSION=0.5.0
+set APP_VERSION=0.5.5
 
 
 IF "%JAVA_HOME%" == "" (
