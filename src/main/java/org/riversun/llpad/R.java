@@ -24,6 +24,8 @@
 package org.riversun.llpad;
 
 import java.awt.Color;
+import java.text.MessageFormat;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -41,12 +43,29 @@ public class R {
 	 * Returns the value of resource considering i18n
 	 * 
 	 * @param key
-	 *            kye of property
+	 *            key of property
 	 * @return
 	 */
 	public static String getString(String key) {
 
 		return resourceBundle.getString(key);
+	}
+
+	/**
+	 * Returns the value of resource considering i18n as a compound message<br>
+	 * <p>
+	 * This is a {0}
+	 * 
+	 * @param key
+	 * @param params
+	 * @return
+	 */
+	public static String getString(String key, Object... params) {
+		try {
+			return MessageFormat.format(getString(key), params);
+		} catch (MissingResourceException e) {
+			return null;
+		}
 	}
 
 	public static class string {
@@ -55,6 +74,15 @@ public class R {
 		public static final String Window_File__NO_TITLE = "Window.File.NO_TITLE";
 		public static final String Window_Menu__FILE = "Window.Menu.FILE";
 		public static final String Window_Menu__OPEN = "Window.Menu.OPEN";
+
+		public static final String FileChooser__FILTER_TEXTFILES = "FileChooser.FILTER_TEXTFILES";
+		public static final String FileChooser__openDialogTitleText = "FileChooser.openDialogTitleText";
+		public static final String FileChooser__openButtonText = "FileChooser.openButtonText";
+		public static final String FileChooser__cancelButtonText = "FileChooser.cancelButtonText";
+		public static final String FileChooser__filesOfTypeLabelText = "FileChooser.filesOfTypeLabelText";
+
+		public static final String FileChooser_Msg__COULD_NOT_OPEN_FILE = "FileChooser.Msg.COULD_NOT_OPEN_FILE";
+		public static final String FileChooser_Msg__THIS_FILE_IS_NOT_A_TEXT_FILE = "FileChooser.Msg.THIS_FILE_IS_NOT_A_TEXT_FILE";
 
 	}
 
