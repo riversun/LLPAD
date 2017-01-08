@@ -56,6 +56,7 @@ public class R {
 		public static final String Window_Menu__FILE = "Window.Menu.FILE";
 		public static final String Window_Menu__OPEN = "Window.Menu.OPEN";
 
+		public static final String FileChooser__FILTER_TEXTFILES = "FileChooser.FILTER_TEXTFILES";
 		public static final String FileChooser__openDialogTitleText = "FileChooser.openDialogTitleText";
 		public static final String FileChooser__openButtonText = "FileChooser.openButtonText";
 		public static final String FileChooser__cancelButtonText = "FileChooser.cancelButtonText";

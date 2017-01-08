@@ -42,6 +42,9 @@ public class AppDef {
 	public static class Common {
 
 		public static final String RESOURCE_BUNDLE = "org.riversun.llpad.res.values.String";
+		public static final String[] TEXTFILE_EXTENSIONS=new String[]{
+			"txt","xml","log"
+		};
 	}
 
 	public static class TextBuffer {
