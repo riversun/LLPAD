@@ -74,6 +74,8 @@ public class R {
 		public static final String Window_File__NO_TITLE = "Window.File.NO_TITLE";
 		public static final String Window_Menu__FILE = "Window.Menu.FILE";
 		public static final String Window_Menu__OPEN = "Window.Menu.OPEN";
+		public static final String Window_Menu__EDIT = "Window.Menu.EDIT";
+		public static final String Window_Menu__FIND = "Window.Menu.FIND";
 
 		public static final String FileChooser__FILTER_TEXTFILES = "FileChooser.FILTER_TEXTFILES";
 		public static final String FileChooser__openDialogTitleText = "FileChooser.openDialogTitleText";
