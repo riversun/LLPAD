@@ -35,6 +35,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.text.Document;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -69,6 +70,7 @@ public class GUIBuilder {
 
 	private final DiagTextArea mTextArea = new DiagTextArea();
 	private final JMenuItem mMenuItemOpen = new JMenuItem(R.getString(R.string.Window_Menu__OPEN));
+	private final JMenuItem mMenuItemFind = new JMenuItem(R.getString(R.string.Window_Menu__FIND));
 
 	private final JScrollPane mScrollpane = new JScrollPane(mTextArea,
 			JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
@@ -79,6 +81,7 @@ public class GUIBuilder {
 
 	private VerticalSeekBar mVerticalSeekBar;
 	private final GuiComponent mComponent = new GuiComponent();
+	private File mFile;
 
 	public static class GuiComponent {
 		public DiagTextArea textArea;
@@ -87,6 +90,7 @@ public class GUIBuilder {
 		public VerticalSeekBar verticalSeekBar;
 		public JFrame frame;
 		public JMenuItem menuOpen;
+		public JMenuItem menuFind;
 	}
 
 	public GUIBuilder() {
@@ -101,6 +105,7 @@ public class GUIBuilder {
 		mComponent.verticalSeekBar = mVerticalSeekBar;
 		mComponent.frame = mFrame;
 		mComponent.menuOpen = mMenuItemOpen;
+		mComponent.menuFind = mMenuItemFind;
 		return mComponent;
 	}
 
@@ -144,11 +149,6 @@ public class GUIBuilder {
 			public void run() {
 				mParentLayoutGroup = new JLinearLayout().setChildOrientation(Orientation.VERTICAL);
 
-				final JLinearLayout headerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
-
-				headerArea.setBackground(R.color.Window_Header);
-				// upperArea.addView(something);
-
 				final JLinearLayout middleArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
 
 				middleArea.setBackground(R.color.Window_TextArea_Background);
@@ -173,7 +173,6 @@ public class GUIBuilder {
 				final JLinearLayout footerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
 
 				footerArea.setBackground(R.color.Window_Footer);
-				// bottomArea.addView(something);
 
 			}
 		});
@@ -186,6 +185,8 @@ public class GUIBuilder {
 	 * @param file
 	 */
 	public void setFile(final File file) {
+
+		mFile = file;
 
 		mHandler.post(new Runnable() {
 
@@ -225,11 +226,37 @@ public class GUIBuilder {
 
 				final JMenuBar menubar = new JMenuBar();
 
-				final JMenu menuFile = new JMenu(R.getString(R.string.Window_Menu__FILE));
+				// File Menu
+				{
+					// [File]
+					final JMenu menuFile = new JMenu(R.getString(R.string.Window_Menu__FILE));
+					menuFile.setMnemonic('F');
+					menubar.add(menuFile);
 
-				menubar.add(menuFile);
+					// [File]>[Open]
+					mMenuItemOpen.setMnemonic('O');
+					mMenuItemOpen.setAccelerator(KeyStroke.getKeyStroke(
+							java.awt.event.KeyEvent.VK_O,
+							java.awt.Event.CTRL_MASK));
 
-				menuFile.add(mMenuItemOpen);
+					menuFile.add(mMenuItemOpen);
+				}
+
+				// Edit Menu
+				{
+					// [Edit]
+					final JMenu menuEdit = new JMenu(R.getString(R.string.Window_Menu__EDIT));
+					menuEdit.setMnemonic('E');
+					menubar.add(menuEdit);
+
+					// [Edit]>[Find]
+					mMenuItemFind.setMnemonic('F');
+					mMenuItemFind.setAccelerator(KeyStroke.getKeyStroke(
+							java.awt.event.KeyEvent.VK_F,
+							java.awt.Event.CTRL_MASK));
+					menuEdit.add(mMenuItemFind);
+
+				}
 
 				mFrame.setJMenuBar(menubar);
 

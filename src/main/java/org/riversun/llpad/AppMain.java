@@ -36,6 +36,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.riversun.llpad.ui.GUIBuilder;
 import org.riversun.llpad.ui.GUIFileOpenHandler;
 import org.riversun.llpad.ui.GUIFileOpenHandler.FileSelectionListener;
+import org.riversun.llpad.ui.GUIFileSearchHandler;
 import org.riversun.llpad.ui.TaViewRangeManager;
 import org.riversun.llpad.util.file_buffer.TextFileBufferedWrapper;
 import org.riversun.llpad.widget.helper.EDTHandler;
@@ -104,6 +105,7 @@ public class AppMain {
 
 			@Override
 			public void onFileSelected(boolean isTextFile, File file) {
+
 				if (isTextFile) {
 					openFile(gui, file, 0);
 				} else {
@@ -121,6 +123,8 @@ public class AppMain {
 			}
 
 		});
+
+		final GUIFileSearchHandler searchHandler = new GUIFileSearchHandler(gui.getGuiComponent());
 
 		// Create a window on the UI thread
 		mHandler.post(new Runnable() {
