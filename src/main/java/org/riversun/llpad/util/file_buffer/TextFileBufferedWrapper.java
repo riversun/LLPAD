@@ -304,7 +304,9 @@ public class TextFileBufferedWrapper implements Disposable {
 					cutStartIndex = 0;
 				}
 
-				if (viewEndAddr == mFileSize - 1) {
+				final boolean isShowTheEndOfTheTextFile = viewEndAddr == mFileSize - 1;
+
+				if (isShowTheEndOfTheTextFile) {
 					LOGGER.fine("This view can show the end of the text file.");
 
 					cutEndIndex = textForView.length();
@@ -322,7 +324,14 @@ public class TextFileBufferedWrapper implements Disposable {
 				final int viewStartIndex = mCurrentCachedTextBlock.getStringIndexFromAddress(viewStartAddr);
 
 				final long cutStartAddr = mCurrentCachedTextBlock.getAddressFromStringIndex(cutStartIndex + viewStartIndex);
-				final long cutEndAddr = mCurrentCachedTextBlock.getAddressFromStringIndex(cutEndIndex - 1 + viewStartIndex);
+				long cutEndAddr = mCurrentCachedTextBlock.getAddressFromStringIndex(cutEndIndex - 1 + viewStartIndex);
+
+				if (isShowTheEndOfTheTextFile) {
+					// When displaying the end of the text file,set
+					// cutEndAddress to viewEndAddress whatever address
+					// cutEndAddress is.
+					cutEndAddr = viewEndAddr;
+				}
 
 				refText2DCache.text = textForPrettyView;
 				refText2DCache.prefferedViewStartAddr = cutStartAddr;
