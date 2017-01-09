@@ -23,6 +23,7 @@
  */
 package org.riversun.llpad.widget.component;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -40,8 +41,14 @@ import java.util.List;
 import java.util.TooManyListenersException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JTextArea;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Document;
+import javax.swing.text.Highlighter;
 
 import org.riversun.llpad.widget.component.JTextAreaHelper.JTextAreaInfo;
 import org.riversun.llpad.widget.component.JTextAreaHelper.JTextAreaRowInfo;
@@ -89,12 +96,23 @@ public class DiagTextArea extends JTextArea {
 
 	}
 
+	public static Highlighter.HighlightPainter mHlPaint = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE);
+
+	public static class HighlightInfo {
+
+		public String word;
+		public boolean caseSensitive;
+
+	}
+
 	private final TextAreaVisibleArea m_Ref_VisibleArea = new TextAreaVisibleArea();
 	private final JTextAreaHelper mTextAreaUtil = new JTextAreaHelper();
 	private final DropTarget mDropTarget = new DropTarget();
 
 	private FileDropListener mFileDropListener;
 	private DropTargetListener mDropTargetListener;
+
+	private HighlightInfo mHlInfo = null;
 
 	public DiagTextArea() {
 		enableDrop();
@@ -130,10 +148,25 @@ public class DiagTextArea extends JTextArea {
 	public void setText(String text, boolean updateCurrentVisibleArea) {
 		super.setText(text);
 
+		handleHighlightWord();
+
 		if (updateCurrentVisibleArea) {
 			getCurrentVisibleAreaAndUpdate();
 		}
 
+	}
+
+	/**
+	 * Returns text
+	 */
+	public String getText() {
+
+		final Document doc = getDocument();
+		try {
+			return doc.getText(0, doc.getLength());
+		} catch (BadLocationException e) {
+		}
+		return null;
 	}
 
 	public TextAreaVisibleArea getCurrentVisibleAreaAndUpdate() {
@@ -428,57 +461,71 @@ public class DiagTextArea extends JTextArea {
 	public int getCaretPosition() {
 		return super.getCaretPosition();
 	}
-	// Since getVisibleRect is buggy,preparing to override
-	// it.[begin]/////////////
-	// @Override
-	// public Rectangle getVisibleRect() {
-	// Rectangle visibleRect = new Rectangle();
-	//
-	// computeVisibleRect(visibleRect);
-	// return visibleRect;
-	// }
-	//
-	// @Override
-	// public void computeVisibleRect(Rectangle visibleRect) {
-	// computeVisibleRectEx(this, visibleRect);
-	// }
-	//
-	// private void computeVisibleRectEx(Component c, Rectangle visibleRect) {
-	//
-	// Container p = c.getParent();
-	// Rectangle bounds = c.getBounds();
-	//
-	// if (p == null || p instanceof Window || p instanceof Applet) {
-	// visibleRect.setBounds(0, 0, bounds.width, bounds.height);
-	// } else {
-	// computeVisibleRectEx(p, visibleRect);
-	// visibleRect.x -= bounds.x;
-	// visibleRect.y -= bounds.y;
-	// computeIntersectionEx(0, 0, bounds.width, bounds.height, visibleRect);
-	// }
-	// }
-	//
-	// private Rectangle computeIntersectionEx(int x, int y, int width, int
-	// height, Rectangle dest) {
-	// int x1 = (x > dest.x) ? x : dest.x;
-	// int x2 = ((x + width) < (dest.x + dest.width)) ? (x + width) : (dest.x +
-	// dest.width);
-	// int y1 = (y > dest.y) ? y : dest.y;
-	// int y2 = ((y + height) < (dest.y + dest.height) ? (y + height) : (dest.y
-	// + dest.height));
-	//
-	// dest.x = x1;
-	// dest.y = y1;
-	// dest.width = x2 - x1;
-	// dest.height = y2 - y1;
-	//
-	// // If rectangles don't intersect, return zero'd intersection.
-	// if (dest.width < 0 || dest.height < 0) {
-	// dest.x = dest.y = dest.width = dest.height = 0;
-	// }
-	//
-	// return dest;
-	// }
 
-	// Since getVisibleRect is buggy,preparing to override it.[end]/////////////
+	public void setHighlightArea(int start, int end) {
+		clearHighlightWord();
+
+		final Highlighter hl = getHighlighter();
+		try {
+			hl.addHighlight(start, end, mHlPaint);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setHighlightWord(String word, boolean caseSensitive) {
+
+		clearHighlightWord();
+
+		mHlInfo = new HighlightInfo();
+		mHlInfo.word = word;
+		mHlInfo.caseSensitive = caseSensitive;
+		handleHighlightWord();
+	}
+
+	public void clearHighlightWord() {
+		mHlInfo = null;
+		handleHighlightWord();
+	}
+
+	private void clearHighlights() {
+		final Highlighter hl = getHighlighter();
+		hl.removeAllHighlights();
+
+	}
+
+	private void handleHighlightWord() {
+
+		clearHighlights();
+
+		if (mHlInfo == null) {
+			return;
+		}
+
+		final int flags;
+
+		if (mHlInfo.caseSensitive) {
+			flags = 0;
+		} else {
+			flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+		}
+
+		final Pattern pattern = Pattern.compile(mHlInfo.word, flags);
+		final Matcher matcher = pattern.matcher(getText());
+
+		int posisionIndex = 0;
+
+		final Highlighter hl = getHighlighter();
+		try {
+			while (matcher.find(posisionIndex)) {
+				int startIndex = matcher.start();
+				int endIndex = matcher.end();
+				hl.addHighlight(startIndex, endIndex, mHlPaint);
+				posisionIndex = endIndex;
+			}
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+
+	}
 }
