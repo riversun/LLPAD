@@ -1,7 +1,7 @@
 # Overview
 A text file viewer for very very big size text file. Easy to open a file bigger than 50GB.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.riversun/LLPAD/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.riversun/LLPAD)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.riversun/llpad/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.riversun/llpad)
 
 It is licensed under [MIT](https://opensource.org/licenses/MIT).
 
