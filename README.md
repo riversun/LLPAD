@@ -18,9 +18,6 @@ It is licensed under [MIT](https://opensource.org/licenses/MIT).
 Download Windows installer package  
 (all-in-one package)
 
-[![llpad](https://riversun.github.io/img/llpad_icon.png
- "llpad")](http://riversun.org/downloads/LLPAD-0.5.5.zip)
-[download LLPAD v0.5.5](http://riversun.org/downloads/LLPAD-0.5.5.zip)
 
 Or You can download from maven or from Github and build yourself.
 
@@ -32,6 +29,7 @@ You can download from maven or from Github and build yourself.
 
 # Build & Run manually
 ## Create runnable jar including dependencies
+
 ```
 $ mvn clean install
 ```
@@ -39,27 +37,17 @@ $ mvn clean install
 ## Create installer package
 (For now Windows Platform only supported)
 
-1.download gpg
-
-gpg.exe is needed  
-you can downlod from  
-
-https://gpg4win.org/download.html
-
-2.create gpg key
-
-
-If gpg --list-keys returns nothing, gpg --generate-key
-
-
 ```
 > mvn clean install
 > create_installer_for_windows.bat
 ```
 
+installer created in package/outfiles folder
+
 ## Run from command line
+
 ```
-$ java -jar llpad-0.5.5-jar-with-dependencies.jar
+java --add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED -jar .\llpad-0.5.6-jar-with-dependencies.jar
 ```
 
 # Architecture Overview
@@ -85,5 +73,3 @@ $ java -jar llpad-0.5.5-jar-with-dependencies.jar
  </dependency>
  ```
 
-## download jar
- [llpad-0.5.5-jar-with-dependencies.jar](http://repo1.maven.org/maven2/org/riversun/llpad/0.5.5/llpad-0.5.5-jar-with-dependencies.jar)[[MD5]](http://repo1.maven.org/maven2/org/riversun/llpad/0.5.5/llpad-0.5.5-jar-with-dependencies.jar.md5)
