@@ -50,25 +50,19 @@ REM Create a directory "[PJ_ROOT]/package/windows" and put app icon named "[APPN
 copy %PACKAGE_RESOURCE_PATH%\LLPAD.ico %PACKAGE_FOR_WINDOWS_PATH%
 
 
-"%JAVA_HOME%\bin\javapackager" ^
--deploy ^
--native exe ^
--BappVersion=%APP_VERSION% ^
--BshortcutHint=true ^
--Bvendor="Riversun" ^
--BjvmOptions=--add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED ^
--Bwin.menuGroup="LLPAD" ^
--BsystemWide=true ^
--srcdir package/infiles ^
--outdir package/outfiles ^
--outfile LLPAD_OUT ^
--appclass org.riversun.llpad.AppMain ^
--BlicenseFile=license.txt ^
--name "LLPAD" ^
--title "LLPAD" ^
--Bruntime="%JAVA_HOME%\jre" ^
--srcfiles %JAR_NAME%;license.txt ^
--v
+"%JAVA_HOME%\bin\jpackage" ^
+--name "LLPAD" ^
+--app-version %APP_VERSION% ^
+--icon package_resource/LLPAD.ico ^
+--input package/infiles ^
+--main-jar %JAR_NAME% ^
+--main-class org.riversun.llpad.AppMain ^
+--type exe ^
+--dest package/outfiles ^
+--java-options "--add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED" ^
+--win-shortcut ^
+--win-menu ^
+--win-menu-group "LLPAD"
 
 echo package creation finished.
 
