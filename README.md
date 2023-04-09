@@ -15,7 +15,8 @@ It is licensed under [MIT](https://opensource.org/licenses/MIT).
 
 # Install
 ### For Windows
-Download Windows installer package  
+
+You can [download Windows installer package](https://riversun.github.io/LLPAD/index.html)
 (all-in-one package)
 
 
