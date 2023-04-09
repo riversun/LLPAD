@@ -43,6 +43,7 @@ import org.riversun.llpad.widget.helper.EDTHandler;
 /**
  * Entry point of LLPAD
  * 
+ * Add VM Option to "--add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED" when you use on OpenJDK
  * @author Tom Misawa (riversun.org@gmail.com)
  */
 public class AppMain {
@@ -74,9 +75,6 @@ public class AppMain {
 				// do nothing
 			}
 
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-			// TODO show dialog
-			LOGGER.log(Level.SEVERE, "Can not set look and feel.", e);
 		} catch (Exception e) {
 			// TODO show dialog
 			LOGGER.log(Level.SEVERE, "Can not open the app.", e);
