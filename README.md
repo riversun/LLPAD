@@ -38,6 +38,20 @@ $ mvn clean install
 
 ## Create installer package
 (For now Windows Platform only supported)
+
+1.download gpg
+
+gpg.exe is needed  
+you can downlod from  
+
+https://gpg4win.org/download.html
+
+2.create gpg key
+
+
+If gpg --list-keys returns nothing, gpg --generate-key
+
+
 ```
 > mvn clean install
 > create_installer_for_windows.bat

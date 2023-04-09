@@ -5,7 +5,7 @@ REM In case creating msi installer, Download WiX 3.0 or later from http://wix.sf
 
 echo off
 
-set APP_VERSION=0.5.5
+set APP_VERSION=0.5.6
 
 
 IF "%JAVA_HOME%" == "" (
@@ -56,6 +56,7 @@ copy %PACKAGE_RESOURCE_PATH%\LLPAD.ico %PACKAGE_FOR_WINDOWS_PATH%
 -BappVersion=%APP_VERSION% ^
 -BshortcutHint=true ^
 -Bvendor="Riversun" ^
+-BjvmOptions=--add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED ^
 -Bwin.menuGroup="LLPAD" ^
 -BsystemWide=true ^
 -srcdir package/infiles ^
