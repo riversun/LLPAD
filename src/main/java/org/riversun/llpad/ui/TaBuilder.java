@@ -33,9 +33,12 @@ import java.awt.event.MouseWheelListener;
 import java.util.logging.Logger;
 
 import javax.swing.UIManager;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 
 import org.riversun.llpad.AppDef;
 import org.riversun.llpad.fw.Disposable;
+import org.riversun.llpad.util.AddressFormatter;
 import org.riversun.llpad.widget.component.DiagTextArea;
 
 /**
@@ -49,222 +52,218 @@ import org.riversun.llpad.widget.component.DiagTextArea;
  */
 public class TaBuilder implements Disposable {
 
-	private static final Logger LOGGER = Logger.getLogger(TaBuilder.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(TaBuilder.class.getName());
 
-	public enum CaretDir {
-		LEFT, UP, RIGHT, DOWN
-	}
+  public enum CaretDir {
+    LEFT, UP, RIGHT, DOWN
+  }
 
-	public static interface JTextAreaEventListener {
-		public void onCaretMovingStarted(CaretDir dir, int caretIndex, int caretRow);
+  public static interface JTextAreaEventListener {
+    public void onCaretMovingStarted(CaretDir dir, int caretIndex, int caretRow);
 
-		public void onCaretMovingFinished(int caretIndex, int caretRow);
-	}
+    public void onCaretMovingFinished(int caretIndex, int caretRow);
+  }
 
-	private final DiagTextArea mTextArea;
+  private final DiagTextArea mTextArea;
 
-	private JTextAreaEventListener mTextAreaEventListener;
-	private KeyListener mKeyListener = null;
-	private MouseListener mMouseListener = null;
-	private MouseWheelListener mMouseWheelListener = null;
+  private JTextAreaEventListener mTextAreaEventListener;
+  private KeyListener mKeyListener = null;
+  private MouseListener mMouseListener = null;
+  private MouseWheelListener mMouseWheelListener = null;
 
-	public TaBuilder(DiagTextArea textArea) {
+  public TaBuilder(DiagTextArea textArea) {
 
-		LOGGER.fine("initialize " + this);
+    LOGGER.fine("initialize " + this);
 
-		mTextArea = textArea;
-		buildTextArea();
-	}
+    mTextArea = textArea;
+    buildTextArea();
+  }
 
-	public void setJTextAreaEvent(JTextAreaEventListener listener) {
-		mTextAreaEventListener = listener;
-	}
+  public void setJTextAreaEvent(JTextAreaEventListener listener) {
+    mTextAreaEventListener = listener;
+  }
 
-	private void buildTextArea() {
+  private void buildTextArea() {
 
-		LOGGER.fine("initialize text area");
+    LOGGER.fine("initialize text area");
 
-		// TODO font handling
-		// mTextArea.setFont());
-		mTextArea.setForeground(UIManager.getColor("Label.foreground"));
-		mTextArea.setBackground(Color.white);
-		mTextArea.setLineWrap(true);
-		mTextArea.setOpaque(false);
-		mTextArea.setEditable(false);
-		mTextArea.setFocusable(true);
-		mTextArea.getCaret().setVisible(true);
-		mTextArea.setAutoscrolls(false);
+    // TODO font handling
+    // mTextArea.setFont());
+    mTextArea.setForeground(UIManager.getColor("Label.foreground"));
+    mTextArea.setBackground(Color.white);
+    mTextArea.setLineWrap(true);
+    mTextArea.setOpaque(false);
+    mTextArea.setEditable(false);
+    mTextArea.setFocusable(true);
+    mTextArea.getCaret().setVisible(true);
+    mTextArea.setAutoscrolls(false);
 
-		/*
-		 * If you do not call #setBorder(null), even if you try to scroll
-		 * JTextArea to the top, the upper left coordinate of visibleRect
-		 * becomes like (0,2) not (0,0). Since the upper left coordinate does
-		 * not become (0, 0), it is impossible to scroll to the top.
-		 */
-		mTextArea.setBorder(null);
+    /*
+     * If you do not call #setBorder(null), even if you try to scroll
+     * JTextArea to the top, the upper left coordinate of visibleRect
+     * becomes like (0,2) not (0,0). Since the upper left coordinate does
+     * not become (0, 0), it is impossible to scroll to the top.
+     */
+    mTextArea.setBorder(null);
 
-		mKeyListener = new KeyListener() {
+    mKeyListener = new KeyListener() {
 
-			@Override
-			public void keyPressed(KeyEvent e) {
+      @Override
+      public void keyPressed(KeyEvent e) {
 
-				final int caretIndex = mTextArea.getCaretIndex();
-				final int caretRowIndex = mTextArea.getRowIndexAt(caretIndex);
+        final int caretIndex = mTextArea.getCaretIndex();
+        final int caretRowIndex = mTextArea.getRowIndexAt(caretIndex);
 
-				CaretDir dir = null;
+        CaretDir dir = null;
 
-				if (mTextAreaEventListener != null) {
+        if (mTextAreaEventListener != null) {
 
-					final int keyCode = e.getKeyCode();
+          final int keyCode = e.getKeyCode();
 
-					if (keyCode == KeyEvent.VK_KP_UP || keyCode == KeyEvent.VK_UP) {
-						dir = CaretDir.UP;
-					}
-					else if (keyCode == KeyEvent.VK_PAGE_UP) {
-						// clear current key event
-						e.consume();
-						mTextArea.scrollTextLine(-AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_PAGE_KEY);
-						return;
-					}
-					else if (keyCode == KeyEvent.VK_KP_LEFT || keyCode == KeyEvent.VK_LEFT) {
-						dir = CaretDir.LEFT;
-					}
-					else if (keyCode == KeyEvent.VK_KP_RIGHT || keyCode == KeyEvent.VK_RIGHT) {
-						dir = CaretDir.RIGHT;
-					}
-					else if (keyCode == KeyEvent.VK_KP_DOWN || keyCode == KeyEvent.VK_DOWN) {
+          if (keyCode == KeyEvent.VK_KP_UP || keyCode == KeyEvent.VK_UP) {
+            dir = CaretDir.UP;
+          } else if (keyCode == KeyEvent.VK_PAGE_UP) {
+            // clear current key event
+            e.consume();
+            mTextArea.scrollTextLine(-AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_PAGE_KEY);
+            return;
+          } else if (keyCode == KeyEvent.VK_KP_LEFT || keyCode == KeyEvent.VK_LEFT) {
+            dir = CaretDir.LEFT;
+          } else if (keyCode == KeyEvent.VK_KP_RIGHT || keyCode == KeyEvent.VK_RIGHT) {
+            dir = CaretDir.RIGHT;
+          } else if (keyCode == KeyEvent.VK_KP_DOWN || keyCode == KeyEvent.VK_DOWN) {
 
-						dir = CaretDir.DOWN;
+            dir = CaretDir.DOWN;
 
-					}
-					else if (keyCode == KeyEvent.VK_PAGE_DOWN) {
-						/*
-						 * If you released the PageUp Key or PageDown key,
-						 * keyReleased event will occur. When the keyReleased
-						 * event occurs, #doHandleCaretMovingFinish is called
-						 * and #doHandleCaretMovingFinish will update the value
-						 * of vertical seekbar.
-						 */
-						dir = CaretDir.DOWN;
+          } else if (keyCode == KeyEvent.VK_PAGE_DOWN) {
+            /*
+             * If you released the PageUp Key or PageDown key,
+             * keyReleased event will occur. When the keyReleased
+             * event occurs, #doHandleCaretMovingFinish is called
+             * and #doHandleCaretMovingFinish will update the value
+             * of vertical seekbar.
+             */
+            dir = CaretDir.DOWN;
 
-						// clear current key event
-						e.consume();
-						mTextArea.scrollTextLine(AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_PAGE_KEY);
-						return;
-					} else if (keyCode == KeyEvent.VK_ENTER) {
-						mTextArea.getFirstCaretIndexOfCurrentVisible();
-					}
+            // clear current key event
+            e.consume();
+            mTextArea.scrollTextLine(AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_PAGE_KEY);
+            return;
+          } else if (keyCode == KeyEvent.VK_ENTER) {
+            mTextArea.getFirstCaretIndexOfCurrentVisible();
+          }
 
-					mTextAreaEventListener.onCaretMovingStarted(dir, caretIndex, caretRowIndex);
-				}
+          mTextAreaEventListener.onCaretMovingStarted(dir, caretIndex, caretRowIndex);
+        }
 
-			}
+      }
 
-			@Override
-			public void keyReleased(KeyEvent e) {
+      @Override
+      public void keyReleased(KeyEvent e) {
 
-				doHandleCaretMovingFinish();
+        doHandleCaretMovingFinish();
 
-			}
+      }
 
-			@Override
-			public void keyTyped(KeyEvent e) {
-			}
+      @Override
+      public void keyTyped(KeyEvent e) {
+      }
 
-		};
-		mTextArea.addKeyListener(mKeyListener);
+    };
+    mTextArea.addKeyListener(mKeyListener);
 
-		mMouseListener = new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
+    mMouseListener = new MouseListener() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
 
-				/*
-				 * Since the cursor disappears when you return from another
-				 * app's window. So, explicitly display the cursor again.
-				 */
-				mTextArea.showCaret();
-			}
+        /*
+         * Since the cursor disappears when you return from another
+         * app's window. So, explicitly display the cursor again.
+         */
+        mTextArea.showCaret();
+      }
 
-			@Override
-			public void mouseReleased(MouseEvent e) {
-			}
+      @Override
+      public void mouseReleased(MouseEvent e) {
+      }
 
-			@Override
-			public void mousePressed(MouseEvent e) {
-			}
+      @Override
+      public void mousePressed(MouseEvent e) {
 
-			@Override
-			public void mouseExited(MouseEvent e) {
-			}
+        doHandleCaretMovingFinish();
+      }
 
-			@Override
-			public void mouseEntered(MouseEvent e) {
-			}
+      @Override
+      public void mouseExited(MouseEvent e) {
+      }
 
-		};
+      @Override
+      public void mouseEntered(MouseEvent e) {
+      }
 
-		mTextArea.addMouseListener(mMouseListener);
+    };
 
-		mMouseWheelListener = new MouseWheelListener() {
+    mTextArea.addMouseListener(mMouseListener);
 
-			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
+    mMouseWheelListener = new MouseWheelListener() {
 
-				final int notches = e.getWheelRotation();
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
 
-				if (notches < 0) {
+        final int notches = e.getWheelRotation();
 
-					final int numOfScrollLines = -AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_MOUSE_WHEEL * Math.abs(notches);
-					LOGGER.finer("notches=" + notches + " SCROLL UP numOfScrollLines=" + numOfScrollLines + " @ " + TaBuilder.this);
+        if (notches < 0) {
 
-					mTextArea.scrollTextLine(numOfScrollLines);
-					LOGGER.finer("call doHandleCaretMovingFinish");
+          final int numOfScrollLines = -AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_MOUSE_WHEEL * Math.abs(notches);
+          LOGGER.finer("notches=" + notches + " SCROLL UP numOfScrollLines=" + numOfScrollLines + " @ " + TaBuilder.this);
 
-					doHandleCaretMovingFinish();
-				}
-				else if (notches > 0) {
-					final int numOfScrollLines = AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_MOUSE_WHEEL * Math.abs(notches);
-					LOGGER.finer("notches=" + notches + " SCROLL DOWN numOfScrollLines=" + numOfScrollLines + " @ " + TaBuilder.this);
+          mTextArea.scrollTextLine(numOfScrollLines);
+          LOGGER.finer("call doHandleCaretMovingFinish");
 
-					mTextArea.scrollTextLine(numOfScrollLines);
-					LOGGER.finer("call doHandleCaretMovingFinish");
-					doHandleCaretMovingFinish();
-				}
+          doHandleCaretMovingFinish();
+        } else if (notches > 0) {
+          final int numOfScrollLines = AppDef.TextArea.NUM_OF_LINES_INCREMENTED_BY_MOUSE_WHEEL * Math.abs(notches);
+          LOGGER.finer("notches=" + notches + " SCROLL DOWN numOfScrollLines=" + numOfScrollLines + " @ " + TaBuilder.this);
 
-			}
-		};
-		mTextArea.addMouseWheelListener(mMouseWheelListener);
-	}
+          mTextArea.scrollTextLine(numOfScrollLines);
+          LOGGER.finer("call doHandleCaretMovingFinish");
+          doHandleCaretMovingFinish();
+        }
 
-	private void doHandleCaretMovingFinish() {
+      }
+    };
+    mTextArea.addMouseWheelListener(mMouseWheelListener);
+  }
 
-		final int caretIndex = mTextArea.getCaretIndex();
-		final int caretRowIndex = mTextArea.getRowIndexAt(caretIndex);
+  private void doHandleCaretMovingFinish() {
 
-		LOGGER.finer("caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex);
+    final int caretIndex = mTextArea.getCaretIndex();
+    final int caretRowIndex = mTextArea.getRowIndexAt(caretIndex);
 
-		if (mTextAreaEventListener != null) {
-			mTextAreaEventListener.onCaretMovingFinished(caretIndex, caretRowIndex);
-		}
-	}
+    LOGGER.finer("#doHandleCaretMovingFinish caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex);
 
-	@Override
-	public void dispose() {
-		mTextAreaEventListener = null;
+    if (mTextAreaEventListener != null) {
+      mTextAreaEventListener.onCaretMovingFinished(caretIndex, caretRowIndex);
+    }
+  }
 
-		if (mKeyListener != null) {
-			mTextArea.removeKeyListener(mKeyListener);
-			mKeyListener = null;
-		}
+  @Override
+  public void dispose() {
+    mTextAreaEventListener = null;
 
-		if (mMouseListener != null) {
-			mTextArea.removeMouseListener(mMouseListener);
-			mMouseListener = null;
-		}
-		if (mMouseWheelListener != null) {
-			mTextArea.removeMouseWheelListener(mMouseWheelListener);
-			mMouseWheelListener = null;
-		}
+    if (mKeyListener != null) {
+      mTextArea.removeKeyListener(mKeyListener);
+      mKeyListener = null;
+    }
 
-	}
+    if (mMouseListener != null) {
+      mTextArea.removeMouseListener(mMouseListener);
+      mMouseListener = null;
+    }
+    if (mMouseWheelListener != null) {
+      mTextArea.removeMouseWheelListener(mMouseWheelListener);
+      mMouseWheelListener = null;
+    }
+
+  }
 }

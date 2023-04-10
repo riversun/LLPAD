@@ -23,6 +23,7 @@
  */
 package org.riversun.llpad.ui;
 
+import java.awt.Color;
 import java.awt.Image;
 import java.io.File;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.logging.Logger;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -62,181 +64,196 @@ import org.riversun.llpad.widget.helper.JLinearLayout.Orientation;
  */
 public class GUIBuilder {
 
-	private static final Logger LOGGER = Logger.getLogger(GUIBuilder.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(GUIBuilder.class.getName());
 
-	private final EDTHandler mHandler = new EDTHandler();
-	private final JFrame mFrame = new JFrame();
+  private final EDTHandler mHandler = new EDTHandler();
+  private final JFrame mFrame = new JFrame();
 
-	private final DiagTextArea mTextArea = new DiagTextArea();
-	private final JMenuItem mMenuItemOpen = new JMenuItem(R.getString(R.string.Window_Menu__OPEN));
+  private final DiagTextArea mTextArea = new DiagTextArea();
+  private final JMenuItem mMenuItemOpen = new JMenuItem(R.getString(R.string.Window_Menu__OPEN));
 
-	private final JScrollPane mScrollpane = new JScrollPane(mTextArea,
-			JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+  private final JScrollPane mScrollpane = new JScrollPane(mTextArea,
+      JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-	private TaBuilder mTextAreaBuilder;
+  private TaBuilder mTextAreaBuilder;
 
-	private JLinearLayout mParentLayoutGroup;
+  private JLinearLayout mParentLayoutGroup;
 
-	private VerticalSeekBar mVerticalSeekBar;
-	private final GuiComponent mComponent = new GuiComponent();
+  private VerticalSeekBar mVerticalSeekBar;
+  private final JLabel mFooterLabel = new JLabel();
 
-	public static class GuiComponent {
-		public DiagTextArea textArea;
-		public Document textAreaDocument;
-		public TaBuilder taBuilder;
-		public VerticalSeekBar verticalSeekBar;
-		public JFrame frame;
-		public JMenuItem menuOpen;
-	}
+  private final GuiComponent mComponent = new GuiComponent();
 
-	public GUIBuilder() {
-		buildGui();
-		initGui();
-	}
+  public static class GuiComponent {
+    public DiagTextArea textArea;
+    public Document textAreaDocument;
+    public TaBuilder taBuilder;
+    public VerticalSeekBar verticalSeekBar;
+    public JFrame frame;
+    public JMenuItem menuOpen;
+    public JLabel footerLabel;
+  }
 
-	public GuiComponent getGuiComponent() {
-		mComponent.textArea = mTextArea;
-		mComponent.textAreaDocument = mTextArea.getDocument();
-		mComponent.taBuilder = mTextAreaBuilder;
-		mComponent.verticalSeekBar = mVerticalSeekBar;
-		mComponent.frame = mFrame;
-		mComponent.menuOpen = mMenuItemOpen;
-		return mComponent;
-	}
+  public GUIBuilder() {
+    buildGui();
+    initGui();
+  }
 
-	/**
-	 * Initialize GUI when opening/reopening new file
-	 */
-	public void initGui() {
-		mHandler.post(new Runnable() {
+  public GuiComponent getGuiComponent() {
+    mComponent.textArea = mTextArea;
+    mComponent.textAreaDocument = mTextArea.getDocument();
+    mComponent.taBuilder = mTextAreaBuilder;
+    mComponent.verticalSeekBar = mVerticalSeekBar;
+    mComponent.frame = mFrame;
+    mComponent.menuOpen = mMenuItemOpen;
+    mComponent.footerLabel = mFooterLabel;
+    return mComponent;
+  }
 
-			@Override
-			public void run() {
-				LOGGER.fine("initialize");
+  /**
+   * Initialize GUI when opening/reopening new file
+   */
+  public void initGui() {
+    mHandler.post(new Runnable() {
 
-				if (mTextAreaBuilder != null) {
-					LOGGER.fine("dispose " + mTextAreaBuilder);
-					mTextAreaBuilder.dispose();
-					mTextAreaBuilder = null;
-				}
+      @Override
+      public void run() {
+        LOGGER.fine("initialize");
 
-				mTextAreaBuilder = new TaBuilder(mTextArea);
+        if (mTextAreaBuilder != null) {
+          LOGGER.fine("dispose " + mTextAreaBuilder);
+          mTextAreaBuilder.dispose();
+          mTextAreaBuilder = null;
+        }
 
-				mFrame.setTitle(R.getString(R.string.Window_File__NO_TITLE) + " - " + R.getString(R.string.Window__AppName));
+        mTextAreaBuilder = new TaBuilder(mTextArea);
 
-				// clear vertical scroll bar
-				mScrollpane.getHorizontalScrollBar().setEnabled(false);
-				mVerticalSeekBar.setEnabled(false);
-				mVerticalSeekBar.setLongValue(0);
-				mVerticalSeekBar.setMaxLongValue(100);
-				mVerticalSeekBar.setVisibleAmount(10);
+        mFrame.setTitle(R.getString(R.string.Window_File__NO_TITLE) + " - " + R.getString(R.string.Window__AppName));
 
-			}
-		});
+        // clear vertical scroll bar
+        mScrollpane.getHorizontalScrollBar().setEnabled(false);
+        mVerticalSeekBar.setEnabled(false);
+        mVerticalSeekBar.setLongValue(0);
+        mVerticalSeekBar.setMaxLongValue(100);
+        mVerticalSeekBar.setVisibleAmount(10);
 
-	}
+      }
+    });
 
-	private void buildGui() {
+  }
 
-		mHandler.post(new Runnable() {
+  private void buildGui() {
 
-			@Override
-			public void run() {
-				mParentLayoutGroup = new JLinearLayout().setChildOrientation(Orientation.VERTICAL);
+    mHandler.post(new Runnable() {
 
-				final JLinearLayout headerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
+      @Override
+      public void run() {
+        mParentLayoutGroup = new JLinearLayout().setChildOrientation(Orientation.VERTICAL);
 
-				headerArea.setBackground(R.color.Window_Header);
-				// upperArea.addView(something);
+        final JLinearLayout headerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
 
-				final JLinearLayout middleArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
+        headerArea.setBackground(R.color.Window_Header);
+        // upperArea.addView(something);
 
-				middleArea.setBackground(R.color.Window_TextArea_Background);
-				mScrollpane.setAutoscrolls(false);
+        final JLinearLayout middleArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
 
-				// To whiten the background of the scroll pane
-				mScrollpane.getViewport().setOpaque(false);
-				mScrollpane.setBorder(null);
-				mScrollpane.setBackground(R.color.Window_TextArea_Background);
+        middleArea.setBackground(R.color.Window_TextArea_Background);
+        mScrollpane.setAutoscrolls(false);
 
-				if (SystemUtils.IS_OS_WINDOWS) {
-					mVerticalSeekBar = new VerticalSeekBar4Windows();
-				} else {
-					mVerticalSeekBar = new VerticalSeekBar4Common();
-				}
+        // To whiten the background of the scroll pane
+        mScrollpane.getViewport().setOpaque(false);
+        mScrollpane.setBorder(null);
+        mScrollpane.setBackground(R.color.Window_TextArea_Background);
 
-				middleArea.addView(mScrollpane, 1.0d);
-				middleArea.addView(mVerticalSeekBar, 0.00d);
+        if (SystemUtils.IS_OS_WINDOWS) {
+          mVerticalSeekBar = new VerticalSeekBar4Windows();
+        } else {
+          mVerticalSeekBar = new VerticalSeekBar4Common();
+        }
 
-				mParentLayoutGroup.addView(middleArea, 0.8d);
+        middleArea.addView(mScrollpane, 1.0d);
+        middleArea.addView(mVerticalSeekBar, 0.00d);
 
-				final JLinearLayout footerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
+        mParentLayoutGroup.addView(middleArea);
 
-				footerArea.setBackground(R.color.Window_Footer);
-				// bottomArea.addView(something);
 
-			}
-		});
 
-	}
+        final JLinearLayout footerArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
 
-	/**
-	 * Set target file
-	 * 
-	 * @param file
-	 */
-	public void setFile(final File file) {
+        footerArea.setBackground(R.color.Window_Footer);
+        
+        //final JLinearLayout bottomArea = new JLinearLayout().setChildOrientation(Orientation.HORIZONTAL);
+        mParentLayoutGroup.addView(footerArea, 0.02d);
 
-		mHandler.post(new Runnable() {
+        // Set the background color of the JLabel
+        mFooterLabel.setOpaque(true);
 
-			@Override
-			public void run() {
-				mFrame.setTitle(file.getName() + " - " + R.getString(R.string.Window__AppName));
-				// clear scroll bar
-				mScrollpane.getHorizontalScrollBar().setEnabled(true);
-				mVerticalSeekBar.setEnabled(true);
+        // Set the font color of the JLabel
+        mFooterLabel.setForeground(Color.black);
+        footerArea.addView(mFooterLabel);
 
-			}
-		});
+      }
+    });
 
-	}
+  }
 
-	/**
-	 * Create and show window
-	 */
-	public void createWindow() {
+  /**
+   * Set target file
+   * 
+   * @param file
+   */
+  public void setFile(final File file) {
 
-		mHandler.post(new Runnable() {
+    mHandler.post(new Runnable() {
 
-			@Override
-			public void run() {
-				// show as a window
+      @Override
+      public void run() {
+        mFrame.setTitle(file.getName() + " - " + R.getString(R.string.Window__AppName));
+        // clear scroll bar
+        mScrollpane.getHorizontalScrollBar().setEnabled(true);
+        mVerticalSeekBar.setEnabled(true);
 
-				final List<Image> icons = new ArrayList<Image>();
+      }
+    });
 
-				for (String iconFileName : R.image.ICONS) {
-					icons.add(new ImageIcon(getClass().getResource(iconFileName)).getImage());
-				}
+  }
 
-				mFrame.setIconImages(icons);
-				mFrame.addWindowListener(new MainWindowListener());
-				mFrame.getContentPane().add(mParentLayoutGroup.getAsPanel());
-				mFrame.setSize(AppDef.Window.DEFAULT_WINDOW_WIDTH_PX, AppDef.Window.DEFAULT_WINDOW_HEIGHT_PX);
+  /**
+   * Create and show window
+   */
+  public void createWindow() {
 
-				final JMenuBar menubar = new JMenuBar();
+    mHandler.post(new Runnable() {
 
-				final JMenu menuFile = new JMenu(R.getString(R.string.Window_Menu__FILE));
+      @Override
+      public void run() {
+        // show as a window
 
-				menubar.add(menuFile);
+        final List<Image> icons = new ArrayList<Image>();
 
-				mMenuItemOpen.setUI(new NoIconMenuItemUI());
-				menuFile.add(mMenuItemOpen);
+        for (String iconFileName : R.image.ICONS) {
+          icons.add(new ImageIcon(getClass().getResource(iconFileName)).getImage());
+        }
 
-				mFrame.setJMenuBar(menubar);
+        mFrame.setIconImages(icons);
+        mFrame.addWindowListener(new MainWindowListener());
+        mFrame.getContentPane().add(mParentLayoutGroup.getAsPanel());
+        mFrame.setSize(AppDef.Window.DEFAULT_WINDOW_WIDTH_PX, AppDef.Window.DEFAULT_WINDOW_HEIGHT_PX);
 
-				mFrame.setVisible(true);
-			}
-		});
+        final JMenuBar menubar = new JMenuBar();
 
-	}
+        final JMenu menuFile = new JMenu(R.getString(R.string.Window_Menu__FILE));
+
+        menubar.add(menuFile);
+
+        mMenuItemOpen.setUI(new NoIconMenuItemUI());
+        menuFile.add(mMenuItemOpen);
+
+        mFrame.setJMenuBar(menubar);
+
+        mFrame.setVisible(true);
+      }
+    });
+
+  }
 }

@@ -25,13 +25,14 @@ package org.riversun.llpad;
 
 import java.awt.Component;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import org.riversun.llpad.ui.GUIBuilder;
 import org.riversun.llpad.ui.GUIFileOpenHandler;
@@ -43,134 +44,149 @@ import org.riversun.llpad.widget.helper.EDTHandler;
 /**
  * Entry point of LLPAD
  * 
- * Add VM Option to "--add-exports java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED" when you use on OpenJDK
+ * Add VM Option to "--add-exports
+ * java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED" when you use on
+ * OpenJDK
+ * 
  * @author Tom Misawa (riversun.org@gmail.com)
  */
 public class AppMain {
 
-	public static void main(String[] args) {
+  public static void main(String[] args) {
 
-		try {
+    try {
 
-			if (AppDef.DEBUG.LOGGING == false) {
-				LogManager.getLogManager().reset();
-			}
+      if (AppDef.DEBUG.LOGGING == false) {
+        LogManager.getLogManager().reset();
+      } else {
+        try {
+          InputStream configStream = AppMain.class.getResourceAsStream("/logging.properties");
+          LogManager.getLogManager().readConfiguration(configStream);
+        } catch (IOException e) {
+          System.err.println("Failed to load logging configuration: " + e.getMessage());
+          e.printStackTrace();
+        }
+      }
 
-			LOGGER.fine("Start the app");
+      LOGGER.fine("Start the app");
 
-			System.setProperty("jsse.enableSNIExtension", "false");
+      System.setProperty("jsse.enableSNIExtension", "false");
 
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-			final AppMain app = new AppMain();
-			final GUIBuilder gui = app.buildGUI();
+      final AppMain app = new AppMain();
+      final GUIBuilder gui = app.buildGUI();
 
-			if (args != null && args.length == 1) {
-				String path = args[0];
-				File file = new File(path);
-				if (file.exists() && file.isFile()) {
-					app.openFile(gui, file, 0);
-				}
-			} else {
-				// do nothing
-			}
+      if (args != null && args.length == 1) {
+        String path = args[0];
+        File file = new File(path);
+        if (file.exists() && file.isFile()) {
+          app.openFile(gui, file, 0);
+        }
+      } else {
+        // do nothing
+      }
+      
+      if(true) {
+        app.openFile(gui, new File("D:\\downloads\\jparacrawl_english_to_japanese\\Parallel_corpus\\en-ja\\en-ja.bicleaner05.txt"), 0);
+      }
 
-		} catch (Exception e) {
-			// TODO show dialog
-			LOGGER.log(Level.SEVERE, "Can not open the app.", e);
-		}
-	}
+    } catch (Exception e) {
+      // TODO show dialog
+      LOGGER.log(Level.SEVERE, "Can not open the app.", e);
+    }
+  }
 
-	private static final Logger LOGGER = Logger.getLogger(AppMain.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(AppMain.class.getName());
 
-	private final EDTHandler mHandler = new EDTHandler();
-	private TextFileBufferedWrapper mFileWrapper;
-	private TaViewRangeManager mTextAreaViewRangeManager;
+  private final EDTHandler mHandler = new EDTHandler();
+  private TextFileBufferedWrapper mFileWrapper;
+  private TaViewRangeManager mTextAreaViewRangeManager;
 
-	/**
-	 * Building an window with GUI components
-	 * 
-	 * @return
-	 */
-	public GUIBuilder buildGUI() {
+  /**
+   * Building an window with GUI components
+   * 
+   * @return
+   */
+  public GUIBuilder buildGUI() {
 
-		final GUIBuilder gui = new GUIBuilder();
+    final GUIBuilder gui = new GUIBuilder();
 
-		final GUIFileOpenHandler fileOpenHandler = new GUIFileOpenHandler(gui.getGuiComponent());
+    final GUIFileOpenHandler fileOpenHandler = new GUIFileOpenHandler(gui.getGuiComponent());
 
-		fileOpenHandler.setFileSelectionListener(new FileSelectionListener() {
+    fileOpenHandler.setFileSelectionListener(new FileSelectionListener() {
 
-			@Override
-			public void onFileSelected(boolean isTextFile, File file) {
-				if (isTextFile) {
-					openFile(gui, file, 0);
-				} else {
-					// Display on the dialog informing that only text files are
-					// supported now.
+      @Override
+      public void onFileSelected(boolean isTextFile, File file) {
+        if (isTextFile) {
+          openFile(gui, file, 0);
+        } else {
+          // Display on the dialog informing that only text files are
+          // supported now.
 
-					final Component parent = gui.getGuiComponent().frame;
+          final Component parent = gui.getGuiComponent().frame;
 
-					JOptionPane.showMessageDialog(parent,
-							R.getString(R.string.FileChooser_Msg__THIS_FILE_IS_NOT_A_TEXT_FILE, file.getName()),
-							R.getString(R.string.FileChooser_Msg__COULD_NOT_OPEN_FILE),
-							JOptionPane.WARNING_MESSAGE);
-				}
+          JOptionPane.showMessageDialog(parent,
+              R.getString(R.string.FileChooser_Msg__THIS_FILE_IS_NOT_A_TEXT_FILE, file.getName()),
+              R.getString(R.string.FileChooser_Msg__COULD_NOT_OPEN_FILE),
+              JOptionPane.WARNING_MESSAGE);
+        }
 
-			}
+      }
 
-		});
+    });
 
-		// Create a window on the UI thread
-		mHandler.post(new Runnable() {
-			public void run() {
-				gui.createWindow();
-			}
-		});
+    // Create a window on the UI thread
+    mHandler.post(new Runnable() {
+      public void run() {
+        gui.createWindow();
+      }
+    });
 
-		return gui;
-	}
+    return gui;
+  }
 
-	/**
-	 * Open specified file and read contents
-	 * 
-	 * @param gui
-	 *            GUI buider
-	 * @param file
-	 *            target file
-	 * @param viewStartAddr
-	 *            starting address of view
-	 */
-	public void openFile(final GUIBuilder gui, final File file, final long viewStartAddr) {
+  /**
+   * Open specified file and read contents
+   * 
+   * @param gui
+   *                      GUI buider
+   * @param file
+   *                      target file
+   * @param viewStartAddr
+   *                      starting address of view
+   */
+  public void openFile(final GUIBuilder gui, final File file, final long viewStartAddr) {
 
-		mHandler.post(new Runnable() {
+    mHandler.post(new Runnable() {
 
-			@Override
-			public void run() {
+      @Override
+      public void run() {
 
-				LOGGER.fine("gui=" + gui + " file=" + file + " viewStart=" + viewStartAddr);
+        LOGGER.fine("gui=" + gui + " file=" + file + " viewStart=" + viewStartAddr);
 
-				gui.initGui();
+        gui.initGui();
 
-				gui.setFile(file);
+        gui.setFile(file);
 
-				if (mFileWrapper != null) {
-					mFileWrapper.dispose();
-					mFileWrapper = null;
-				}
+        if (mFileWrapper != null) {
+          mFileWrapper.dispose();
+          mFileWrapper = null;
+        }
 
-				if (mTextAreaViewRangeManager != null) {
-					mTextAreaViewRangeManager.dispose();
-					mTextAreaViewRangeManager = null;
-				}
+        if (mTextAreaViewRangeManager != null) {
+          mTextAreaViewRangeManager.dispose();
+          mTextAreaViewRangeManager = null;
+        }
 
-				mFileWrapper = new TextFileBufferedWrapper(file, AppDef.TextBuffer.BUFFER_SIZE_BYTES, AppDef.TextBuffer.BUFFER_WINDOW_SIZE_BYTES);
-				mTextAreaViewRangeManager = new TaViewRangeManager(mFileWrapper, gui.getGuiComponent(), viewStartAddr, AppDef.TextViewRange.VIEW_AREA_SIZE_BYTES,
-						AppDef.TextViewRange.PAGE_INCREMENT_SIZE_BYTES);
+        mFileWrapper = new TextFileBufferedWrapper(file, AppDef.TextBuffer.BUFFER_SIZE_BYTES, AppDef.TextBuffer.BUFFER_WINDOW_SIZE_BYTES);
+        mTextAreaViewRangeManager = new TaViewRangeManager(mFileWrapper, gui.getGuiComponent(), viewStartAddr, AppDef.TextViewRange.VIEW_AREA_SIZE_BYTES,
+            AppDef.TextViewRange.PAGE_INCREMENT_SIZE_BYTES);
 
-				mTextAreaViewRangeManager.show();
+        mTextAreaViewRangeManager.show();
 
-			}
-		});
+      }
+    });
 
-	}
+  }
 }

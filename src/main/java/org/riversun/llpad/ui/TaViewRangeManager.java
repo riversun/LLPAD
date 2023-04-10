@@ -84,380 +84,388 @@ import org.riversun.llpad.widget.helper.EDTHandler;
  */
 public class TaViewRangeManager implements JTextAreaEventListener, ViewRangeEventListener, Disposable {
 
-	private static final Logger LOGGER = Logger.getLogger(TaViewRangeManager.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(TaViewRangeManager.class.getName());
+
+  private final EDTHandler mHandler = new EDTHandler();
+  private final PlainDocument mTempDocument = new PlainDocument();
 
-	private final EDTHandler mHandler = new EDTHandler();
-	private final PlainDocument mTempDocument = new PlainDocument();
+  private final ViewRange mViewRange;
 
-	private final ViewRange mViewRange;
+  private final TextFileBufferedWrapper mFileWrapper;
+  private final GuiComponent mViews;
 
-	private final TextFileBufferedWrapper mFileWrapper;
-	private final GuiComponent mViews;
+  private long mPrevViewStartAddr = -1;
+  private long mPrevCursorAddr = -1;
 
-	private long mPrevViewStartAddr = -1;
-	private long mPrevCursorAddr = -1;
+  private static final int EXPECTED_AVERAGE_LENGTH_OF_ONE_LINE = 80;
 
-	private static final int EXPECTED_AVERAGE_LENGTH_OF_ONE_LINE = 80;
+  /**
+   * 
+   * @param fileWrapper
+   *                               buffered wrapper
+   * 
+   * @param views
+   *                               holder of GUI components
+   * 
+   * @param viewStartAddr
+   *                               staring address for view
+   * 
+   * @param viewAreaSizeBytes
+   *                               The size(as bytes) of the text to display in
+   *                               the textArea at
+   *                               one time. App reads a part of the file into the
+   *                               buffer,
+   * 
+   * @param pageIncrementSizeBytes
+   *                               the size that the display area is incremented
+   *                               by when the
+   *                               caret reaches the end of the text area
+   */
+  public TaViewRangeManager(TextFileBufferedWrapper fileWrapper, GuiComponent views, long viewStartAddr, int viewAreaSizeBytes, int pageIncrementSizeBytes) {
+
+    mViews = views;
+    mFileWrapper = fileWrapper;
+
+    if (mFileWrapper.getFileSize() < viewAreaSizeBytes) {
+      viewAreaSizeBytes = (int) mFileWrapper.getFileSize();
+    }
+
+    mViewRange = new ViewRange(mFileWrapper, viewStartAddr, viewAreaSizeBytes);
+
+    mViewRange.setPageIncrementSizeBytes(pageIncrementSizeBytes);
+    mViewRange.setViewRangeEventListener(this);
+    mViews.taBuilder.setJTextAreaEvent(this);
+
+    final VerticalSeekBar verticalSeekBar = mViews.verticalSeekBar;
+    verticalSeekBar.setEnabled(true);
+
+    final long fileSize = mFileWrapper.getFileSize();
 
-	/**
-	 * 
-	 * @param fileWrapper
-	 *            buffered wrapper
-	 * 
-	 * @param views
-	 *            holder of GUI components
-	 * 
-	 * @param viewStartAddr
-	 *            staring address for view
-	 * 
-	 * @param viewAreaSizeBytes
-	 *            The size(as bytes) of the text to display in the textArea at
-	 *            one time. App reads a part of the file into the buffer,
-	 * 
-	 * @param pageIncrementSizeBytes
-	 *            the size that the display area is incremented by when the
-	 *            caret reaches the end of the text area
-	 */
-	public TaViewRangeManager(TextFileBufferedWrapper fileWrapper, GuiComponent views, long viewStartAddr, int viewAreaSizeBytes, int pageIncrementSizeBytes) {
-
-		mViews = views;
-		mFileWrapper = fileWrapper;
-
-		if (mFileWrapper.getFileSize() < viewAreaSizeBytes) {
-			viewAreaSizeBytes = (int) mFileWrapper.getFileSize();
-		}
-
-		mViewRange = new ViewRange(mFileWrapper, viewStartAddr, viewAreaSizeBytes);
+    // Number of lines of text file to be read (Roughly predicted value from
+    // file size)
+    final long expectedLines = fileSize / EXPECTED_AVERAGE_LENGTH_OF_ONE_LINE;
 
-		mViewRange.setPageIncrementSizeBytes(pageIncrementSizeBytes);
-		mViewRange.setViewRangeEventListener(this);
-		mViews.taBuilder.setJTextAreaEvent(this);
+    /*
+     * Number of lines that can be displayed on one page. Get the number of
+     * lines that can be displayed on one page from textArea.
+     */
+    final int numOfRows = mViews.textArea.getCurrentVisibleAreaAndUpdate().numOfRows;
 
-		final VerticalSeekBar verticalSeekBar = mViews.verticalSeekBar;
-		verticalSeekBar.setEnabled(true);
+    if (expectedLines <= Integer.MAX_VALUE) {
+      LOGGER.fine("set expected num of lines=" + expectedLines + " for seekbar thumb size.");
 
-		final long fileSize = mFileWrapper.getFileSize();
+      // Width of the knob for 1 page
+      // Width of knob =
+      // ( Maximum value of verticalSeekBar) * (number of lines that can
+      // be displayed on 1 page / number of whole lines)
+      final int seekBarKnobWidth = (int) ((double) expectedLines * (double) numOfRows / (double) expectedLines);
 
-		// Number of lines of text file to be read (Roughly predicted value from
-		// file size)
-		final long expectedLines = fileSize / EXPECTED_AVERAGE_LENGTH_OF_ONE_LINE;
+      verticalSeekBar.setVisibleAmount(seekBarKnobWidth);
+      verticalSeekBar.setMaxIntValue((int) expectedLines);
 
-		/*
-		 * Number of lines that can be displayed on one page. Get the number of
-		 * lines that can be displayed on one page from textArea.
-		 */
-		final int numOfRows = mViews.textArea.getCurrentVisibleAreaAndUpdate().numOfRows;
+    } else {
+      verticalSeekBar.setVisibleAmount(0);
+      verticalSeekBar.setMaxIntValue(Integer.MAX_VALUE);
+    }
 
-		if (expectedLines <= Integer.MAX_VALUE) {
-			LOGGER.fine("set expected num of lines=" + expectedLines + " for seekbar thumb size.");
+    verticalSeekBar.setMaxLongValue(fileSize - 1);
 
-			// Width of the knob for 1 page
-			// Width of knob =
-			// ( Maximum value of verticalSeekBar) * (number of lines that can
-			// be displayed on 1 page / number of whole lines)
-			final int seekBarKnobWidth = (int) ((double) expectedLines * (double) numOfRows / (double) expectedLines);
+    verticalSeekBar.setVScrollBarEvent(new VScrollBarEvent() {
+      long oldAddress = -1;
 
-			verticalSeekBar.setVisibleAmount(seekBarKnobWidth);
-			verticalSeekBar.setMaxIntValue((int) expectedLines);
+      @Override
+      public void onLongValueChanged(boolean adjusting, long address) {
 
-		} else {
-			verticalSeekBar.setVisibleAmount(0);
-			verticalSeekBar.setMaxIntValue(Integer.MAX_VALUE);
-		}
+        if (AppDef.SeekBar.SEEK_WHEN_ADJUSTING_WITH_SEEKBAR || (!AppDef.SeekBar.SEEK_WHEN_ADJUSTING_WITH_SEEKBAR && adjusting == false)) {
 
-		verticalSeekBar.setMaxLongValue(fileSize - 1);
+          LOGGER.fine("!!SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
 
-		verticalSeekBar.setVScrollBarEvent(new VScrollBarEvent() {
-			long oldAddress = -1;
+          if (Math.abs(oldAddress - address) > AppDef.TextBuffer.BUFFER_SIZE_BYTES) {
 
-			@Override
-			public void onLongValueChanged(boolean adjusting, long address) {
+            LOGGER.fine("!!BUFFER JUMP SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
+          } else {
+            LOGGER.fine("!!SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
+          }
 
-				if (AppDef.SeekBar.SEEK_WHEN_ADJUSTING_WITH_SEEKBAR || (!AppDef.SeekBar.SEEK_WHEN_ADJUSTING_WITH_SEEKBAR && adjusting == false)) {
+          mViewRange.seek(adjusting, address);
 
-					LOGGER.fine("!!SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
+        }
 
-					if (Math.abs(oldAddress - address) > AppDef.TextBuffer.BUFFER_SIZE_BYTES) {
+      }
+    });
 
-						LOGGER.fine("!!BUFFER JUMP SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
-					} else {
-						LOGGER.fine("!!SEEK!! with vertical scrollbar address=" + AddressFormatter.getFmtAddress(address));
-					}
+    verticalSeekBar.setOnTrackAreaClickedListener(new TrackAreaEventListener() {
 
-					mViewRange.seek(adjusting, address);
+      @Override
+      public void onTrackClicked(TrackClickEventType trackEvent) {
 
-				}
+        final DiagTextArea textArea = mViews.textArea;
 
-			}
-		});
+        if (trackEvent == null) {
+          LOGGER.warning("position=" + trackEvent);
+          return;
+        }
+        switch (trackEvent) {
+        case TRACK_UP:
+          textArea.scrollTextLine(-AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_TRACK_CLICK);
+          verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
+          break;
+        case TRACK_DOWN:
+          textArea.scrollTextLine(AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_TRACK_CLICK);
+          verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
+          break;
+        case ARROW_UP:
+          textArea.scrollTextLine(-AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_ARROW_CLICK);
+          verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
+          break;
+        case ARROW_DOWN:
+          textArea.scrollTextLine(AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_ARROW_CLICK);
+          verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
+          break;
 
-		verticalSeekBar.setOnTrackAreaClickedListener(new TrackAreaEventListener() {
+        }
 
-			@Override
-			public void onTrackClicked(TrackClickEventType trackEvent) {
+      }
+    });
+  }
 
-				final DiagTextArea textArea = mViews.textArea;
+  public long getCursorAddressOfCurrentCaret() {
 
-				if (trackEvent == null) {
-					LOGGER.warning("position=" + trackEvent);
-					return;
-				}
-				switch (trackEvent) {
-				case TRACK_UP:
-					textArea.scrollTextLine(-AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_TRACK_CLICK);
-					verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
-					break;
-				case TRACK_DOWN:
-					textArea.scrollTextLine(AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_TRACK_CLICK);
-					verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
-					break;
-				case ARROW_UP:
-					textArea.scrollTextLine(-AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_ARROW_CLICK);
-					verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
-					break;
-				case ARROW_DOWN:
-					textArea.scrollTextLine(AppDef.SeekBar.NUM_OF_LINES_INCREMENTED_BY_ARROW_CLICK);
-					verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
-					break;
+    final int caretIndex = mViews.textArea.getCaretIndex();
+    final int viewStartIndex = mViewRange.getViewStartIndex();
+    final int viewEndIndex = mViewRange.getViewEndIndex();
 
-				}
+    final int cursorIndex = caretIndex + viewStartIndex;
 
-			}
-		});
-	}
+    // Whether or not the view shows the end of the file
+    final boolean isViewShowingTheEndOfTheFile = mViewRange.isViewShowingTheEndOfTheFile();
 
-	public long getCursorAddressOfCurrentCaret() {
+    // Whether or not the caret is at the last position of the view
+    final boolean isCursorPlacedInViewEnd = cursorIndex >= viewEndIndex;
 
-		final int caretIndex = mViews.textArea.getCaretIndex();
-		final int viewStartIndex = mViewRange.getViewStartIndex();
-		final int viewEndIndex = mViewRange.getViewEndIndex();
+    if (isCursorPlacedInViewEnd && isViewShowingTheEndOfTheFile) {
+      LOGGER.fine("Caret is place in the end of the file");
 
-		final int cursorIndex = caretIndex + viewStartIndex;
+      return mViewRange.getFileEndAddress();
+    }
 
-		// Whether or not the view shows the end of the file
-		final boolean isViewShowingTheEndOfTheFile = mViewRange.isViewShowingTheEndOfTheFile();
+    final long cursorAddr = mViewRange.getAddressFromStringIndex(cursorIndex);
 
-		// Whether or not the caret is at the last position of the view
-		final boolean isCursorPlacedInViewEnd = cursorIndex >= viewEndIndex;
+    return cursorAddr;
+  }
 
-		if (isCursorPlacedInViewEnd && isViewShowingTheEndOfTheFile) {
-			LOGGER.fine("Caret is place in the end of the file");
+  public void show() {
+    mViewRange.updateView();
+  }
 
-			return mViewRange.getFileEndAddress();
-		}
+  @Override
+  public void onUpdateText(final Text2Display text2disp, final ECursorDir dir) {
 
-		final long cursorAddr = mViewRange.getAddressFromStringIndex(cursorIndex);
+    // Cursor is absolute position of the caret
+    final long cursorAddr = mViewRange.getCursorAddress();
 
-		return cursorAddr;
-	}
+    final long viewStartAddr = mViewRange.getViewStartAddress();
+    final long viewEndAddr = mViewRange.getViewEndAddress();
 
-	public void show() {
-		mViewRange.updateView();
-	}
+    LOGGER.fine("call show text at viewArea=(" + AddressFormatter.getFmtAddress(viewStartAddr) + "-" + AddressFormatter.getFmtAddress(viewEndAddr) + ")");
 
-	@Override
-	public void onUpdateText(final Text2Display text2disp, final ECursorDir dir) {
+    if (mPrevViewStartAddr == viewStartAddr && (dir != ECursorDir.SEEKING && dir != ECursorDir.SEEK_END)) {
+      // When not changing
+      return;
+    }
 
-		// Cursor is absolute position of the caret
-		final long cursorAddr = mViewRange.getCursorAddress();
+    LOGGER.fine("call #getStringIndexFromAddress (1)prefferedCursorAddr=" + AddressFormatter.getFmtAddress(cursorAddr) +
+        " (2)prefferedView Arear=(" + AddressFormatter.getFmtAddress(viewStartAddr) + "-" + AddressFormatter.getFmtAddress(viewEndAddr) + ")");
+    final TextBlock textBlock = mFileWrapper.getTextBlock();
+    final int caretIndex = textBlock.getStringIndexFromAddress(cursorAddr) - textBlock.getStringIndexFromAddress(viewStartAddr);
 
-		final long viewStartAddr = mViewRange.getViewStartAddress();
-		final long viewEndAddr = mViewRange.getViewEndAddress();
+    LOGGER.fine("caretIndex=" + caretIndex);
 
-		LOGGER.fine("call show text at viewArea=(" + AddressFormatter.getFmtAddress(viewStartAddr) + "-" + AddressFormatter.getFmtAddress(viewEndAddr) + ")");
+    mHandler.post(new Runnable() {
 
-		if (mPrevViewStartAddr == viewStartAddr && (dir != ECursorDir.SEEKING && dir != ECursorDir.SEEK_END)) {
-			// When not changing
-			return;
-		}
+      @Override
+      public void run() {
 
-		LOGGER.fine("call #getStringIndexFromAddress (1)prefferedCursorAddr=" + AddressFormatter.getFmtAddress(cursorAddr) +
-				" (2)prefferedView Arear=(" + AddressFormatter.getFmtAddress(viewStartAddr) + "-" + AddressFormatter.getFmtAddress(viewEndAddr) + ")");
-		final TextBlock textBlock = mFileWrapper.getTextBlock();
-		final int caretIndex = textBlock.getStringIndexFromAddress(cursorAddr) - textBlock.getStringIndexFromAddress(viewStartAddr);
+        if (ECursorDir.SEEKING == dir) {
 
-		LOGGER.fine("caretIndex=" + caretIndex);
+          // When seeking, write to another document
+          // TODO It is more efficient to have this processing in a
+          // {@see DiagTextArea}
+          mViews.textArea.setDocument(mTempDocument);
+          mViews.textArea.setText(text2disp.text);
 
-		mHandler.post(new Runnable() {
+        } else {
+          mViews.textArea.setDocument(mViews.textAreaDocument);
+          mViews.textArea.setText(text2disp.text);
 
-			@Override
-			public void run() {
+        }
 
-				if (ECursorDir.SEEKING == dir) {
+        if (LOGGER.isLoggable(Level.FINE) && AppDef.TextArea.SHOW_PRETTY_SENTENCES) {
+          LOGGER.fine("diaplay text below."
+              + " \n=====CACHED TEXT START at " + AddressFormatter.getFmtAddress(viewStartAddr) + " =======\n"
+              + text2disp._firstLine + "\n...[" + (text2disp._numOfLines - 2) + " lines here]...\n"
+              + text2disp._lastLine
+              + "\n=====CACHED TEXT END at " + AddressFormatter.getFmtAddress(viewEndAddr) + " =======");
+        }
 
-					// When seeking, write to another document
-					// TODO It is more efficient to have this processing in a
-					// {@see DiagTextArea}
-					mViews.textArea.setDocument(mTempDocument);
-					mViews.textArea.setText(text2disp.text);
-				} else {
-					mViews.textArea.setDocument(mViews.textAreaDocument);
-					mViews.textArea.setText(text2disp.text);
-				}
+        if (dir == ECursorDir.FORWARD) {
+          // When trying to show next
 
-				if (LOGGER.isLoggable(Level.FINE) && AppDef.TextArea.SHOW_PRETTY_SENTENCES) {
-					LOGGER.fine("diaplay text below."
-							+ " \n=====CACHED TEXT START at " + AddressFormatter.getFmtAddress(viewStartAddr) + " =======\n"
-							+ text2disp._firstLine + "\n...[" + (text2disp._numOfLines - 2) + " lines here]...\n"
-							+ text2disp._lastLine
-							+ "\n=====CACHED TEXT END at " + AddressFormatter.getFmtAddress(viewEndAddr) + " =======");
-				}
+          // Put the caret at the bottom
+          mViews.textArea.putCaretAtTheBottom(caretIndex);
 
-				if (dir == ECursorDir.FORWARD) {
-					// When trying to show next
+        } else if (dir == ECursorDir.BACKWARD) {
+          // When trying to show previous
 
-					// Put the caret at the bottom
-					mViews.textArea.putCaretAtTheBottom(caretIndex);
+          // Move - the line where the specified caret is located - to
+          // the top
+          mViews.textArea.moveCaretLineToTheTop(caretIndex);
 
-				} else if (dir == ECursorDir.BACKWARD) {
-					// When trying to show previous
+        } else if (dir == ECursorDir.SEEK_END) {
 
-					// Move - the line where the specified caret is located - to
-					// the top
-					mViews.textArea.moveCaretLineToTheTop(caretIndex);
+          // When the seek by the scroll bar is completed
 
-				} else if (dir == ECursorDir.SEEK_END) {
+          mViews.textArea.setCaretPosition(caretIndex);
 
-					// When the seek by the scroll bar is completed
+        } else if (dir == ECursorDir.NOTHING) {
+          mViews.textArea.setCaretPosition(caretIndex);
+        }
+        mPrevViewStartAddr = viewStartAddr;
+        
+        mViews.footerLabel.setText(" Cursor: "+ AddressFormatter.getFmtAddress(getCursorAddressOfCurrentCaret()));
+      }
+    });
 
-					mViews.textArea.setCaretPosition(caretIndex);
+  }
 
-				} else if (dir == ECursorDir.NOTHING) {
-					mViews.textArea.setCaretPosition(caretIndex);
-				}
-				mPrevViewStartAddr = viewStartAddr;
-			}
-		});
+  @Override
+  public void onCaretMovingStarted(CaretDir caretDir, int caretIndex, int caretRowIndex) {
 
-	}
+    LOGGER.fine("caretDir=" + caretDir + " caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex);
 
-	@Override
-	public void onCaretMovingStarted(CaretDir caretDir, int caretIndex, int caretRowIndex) {
+    if (caretDir == null) {
+      return;
+    }
 
-		LOGGER.fine("caretDir=" + caretDir + " caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex);
+    final int viewStartIndex = mViewRange.getViewStartIndex();
+    final int viewEndIndex = mViewRange.getViewEndIndex();
 
-		if (caretDir == null) {
-			return;
-		}
+    final int cursorIndex = caretIndex + viewStartIndex;
 
-		final int viewStartIndex = mViewRange.getViewStartIndex();
-		final int viewEndIndex = mViewRange.getViewEndIndex();
+    // Whether the current view shows the end of the file
+    final boolean isViewShowingTheEndOfTheFile = mViewRange.isViewShowingTheEndOfTheFile();
 
-		final int cursorIndex = caretIndex + viewStartIndex;
+    // Whether the caret is located at the end of the view on the buffer.
+    final boolean isCursorPlacedInViewEnd = cursorIndex >= viewEndIndex;
 
-		// Whether the current view shows the end of the file
-		final boolean isViewShowingTheEndOfTheFile = mViewRange.isViewShowingTheEndOfTheFile();
+    if (isCursorPlacedInViewEnd && isViewShowingTheEndOfTheFile) {
+      // When the caret is at the end of the file
+      return;
+    }
 
-		// Whether the caret is located at the end of the view on the buffer.
-		final boolean isCursorPlacedInViewEnd = cursorIndex >= viewEndIndex;
+    final long cursorAddr = mViewRange.getAddressFromStringIndex(cursorIndex);
 
-		if (isCursorPlacedInViewEnd && isViewShowingTheEndOfTheFile) {
-			// When the caret is at the end of the file
-			return;
-		}
+    mViewRange.setCursorAddress(cursorAddr);
 
-		final long cursorAddr = mViewRange.getAddressFromStringIndex(cursorIndex);
+    if (mPrevCursorAddr == cursorAddr) {
+      return;
+    }
 
-		mViewRange.setCursorAddress(cursorAddr);
+    mPrevCursorAddr = cursorAddr;
 
-		if (mPrevCursorAddr == cursorAddr) {
-			return;
-		}
+    // Whether or not the caret is at the first position in the text area
+    final boolean isCarretPlacedInFirstIndex = (caretIndex == 0);
 
-		mPrevCursorAddr = cursorAddr;
+    // Whether or not the caret is at the last position in the text area
+    final boolean isCaretPlacedInLastIndex = (caretIndex == mViews.textArea.getMaxCaretIndex());
 
-		// Whether or not the caret is at the first position in the text area
-		final boolean isCarretPlacedInFirstIndex = (caretIndex == 0);
+    // Whether or not the caret is in the first line in the text area
+    final boolean isCarretPlacedInFirstRow = (0 == caretRowIndex);
 
-		// Whether or not the caret is at the last position in the text area
-		final boolean isCaretPlacedInLastIndex = (caretIndex == mViews.textArea.getMaxCaretIndex());
+    // Whether or not the caret is in the last line in the text area
+    final boolean isCarretPlacedInLastRow = (mViews.textArea.getNumOfRow() - 1 == caretRowIndex);
 
-		// Whether or not the caret is in the first line in the text area
-		final boolean isCarretPlacedInFirstRow = (0 == caretRowIndex);
+    switch (caretDir) {
+    case UP:
+      if (isCarretPlacedInFirstRow) {
 
-		// Whether or not the caret is in the last line in the text area
-		final boolean isCarretPlacedInLastRow = (mViews.textArea.getNumOfRow() - 1 == caretRowIndex);
+        LOGGER.fine("!!SHOW PREV TEXT!! Caret placed in the first row of TEXTAREA " + "prefferedCursorAddr=" + cursorAddr);
 
-		switch (caretDir) {
-		case UP:
-			if (isCarretPlacedInFirstRow) {
+        mViewRange.readBackward();
+        if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
+          updateSeekBar(caretIndex, caretRowIndex);
+        }
 
-				LOGGER.fine("!!SHOW PREV TEXT!! Caret placed in the first row of TEXTAREA " + "prefferedCursorAddr=" + cursorAddr);
+      }
+      break;
+    case LEFT:
+      if (isCarretPlacedInFirstIndex) {
 
-				mViewRange.readBackward();
-				if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
-					updateSeekBar(caretIndex, caretRowIndex);
-				}
+        LOGGER.fine("!!SHOW PREV TEXT!! Caret placed in the first position of TEXTAREA " + "prefferedCursorAddr=" + cursorAddr);
 
-			}
-			break;
-		case LEFT:
-			if (isCarretPlacedInFirstIndex) {
+        mViewRange.readBackward();
+        if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
+          updateSeekBar(caretIndex, caretRowIndex);
+        }
 
-				LOGGER.fine("!!SHOW PREV TEXT!! Caret placed in the first position of TEXTAREA " + "prefferedCursorAddr=" + cursorAddr);
+      }
+      break;
+    case RIGHT:
+      if (isCaretPlacedInLastIndex) {
 
-				mViewRange.readBackward();
-				if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
-					updateSeekBar(caretIndex, caretRowIndex);
-				}
+        LOGGER.fine("!!SHOW NEXT TEXT!! Caret placed in the last position of TEXTAREA caretRowIndex=" + caretRowIndex + " prefferedCursorAddr=" + cursorAddr);
 
-			}
-			break;
-		case RIGHT:
-			if (isCaretPlacedInLastIndex) {
+        mViewRange.readForward();
+        if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
+          updateSeekBar(caretIndex, caretRowIndex);
+        }
 
-				LOGGER.fine("!!SHOW NEXT TEXT!! Caret placed in the last position of TEXTAREA caretRowIndex=" + caretRowIndex + " prefferedCursorAddr=" + cursorAddr);
+      }
+      break;
+    case DOWN:
 
-				mViewRange.readForward();
-				if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
-					updateSeekBar(caretIndex, caretRowIndex);
-				}
+      if (isCarretPlacedInLastRow) {
 
-			}
-			break;
-		case DOWN:
+        LOGGER.fine("!!SHOW NEXT TEXT!! Caret placed in the last row of TEXTAREA caretRowIndex=" + caretRowIndex + " prefferedCursorAddr=" + cursorAddr);
 
-			if (isCarretPlacedInLastRow) {
+        mViewRange.readForward();
+        if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
+          updateSeekBar(caretIndex, caretRowIndex);
+        }
 
-				LOGGER.fine("!!SHOW NEXT TEXT!! Caret placed in the last row of TEXTAREA caretRowIndex=" + caretRowIndex + " prefferedCursorAddr=" + cursorAddr);
+      }
+      break;
 
-				mViewRange.readForward();
-				if (AppDef.TextArea.UPDATE_SEEK_BAR_WHEN_KEY_REPEATING) {
-					updateSeekBar(caretIndex, caretRowIndex);
-				}
+    }
 
-			}
-			break;
+  }
 
-		}
+  @Override
+  public void onCaretMovingFinished(int caretIndex, int caretRowIndex) {
+    updateSeekBar(caretIndex, caretRowIndex);
+  }
 
-	}
+  private void updateSeekBar(int caretIndex, int caretRowIndex) {
 
-	@Override
-	public void onCaretMovingFinished(int caretIndex, int caretRowIndex) {
-		updateSeekBar(caretIndex, caretRowIndex);
-	}
+    final int viewStartIndex = mViewRange.getViewStartIndex();
+    final int viewEndIndex = mViewRange.getViewEndIndex();
+    final int cursorIndex = caretIndex + viewStartIndex;
 
-	private void updateSeekBar(int caretIndex, int caretRowIndex) {
+    LOGGER.finer("caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex + " viewST<cursor<viewED -> " + viewStartIndex + "< " + cursorIndex + " <" + viewEndIndex);
 
-		final int viewStartIndex = mViewRange.getViewStartIndex();
-		final int viewEndIndex = mViewRange.getViewEndIndex();
-		final int cursorIndex = caretIndex + viewStartIndex;
+    // Update VerticalSeekBar's position
+    final VerticalSeekBar verticalSeekBar = mViews.verticalSeekBar;
+    verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
+    mViews.footerLabel.setText(" Cursor: "+ AddressFormatter.getFmtAddress(getCursorAddressOfCurrentCaret()));
+  }
 
-		LOGGER.finer("caretIndex=" + caretIndex + " caretRowIndex=" + caretRowIndex + " viewST<cursor<viewED -> " + viewStartIndex + "< " + cursorIndex + " <" + viewEndIndex);
+  public ViewRange getViewRange() {
+    return mViewRange;
+  }
 
-		// Update VerticalSeekBar's position
-		final VerticalSeekBar verticalSeekBar = mViews.verticalSeekBar;
-		verticalSeekBar.setLongValue(getCursorAddressOfCurrentCaret());
-	}
-
-	public ViewRange getViewRange() {
-		return mViewRange;
-	}
-
-	@Override
-	public void dispose() {
-		mFileWrapper.dispose();
-		mViewRange.dispose();
-	}
+  @Override
+  public void dispose() {
+    mFileWrapper.dispose();
+    mViewRange.dispose();
+  }
 }

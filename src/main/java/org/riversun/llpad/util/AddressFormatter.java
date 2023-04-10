@@ -41,7 +41,7 @@ public class AddressFormatter {
 	}
 
 	public static String getFmtAddress(long addr) {
-		return getHex10X(addr) + "[=" + addr + "]";
+		return getHex10X(addr) + " (" + addr + ")";
 	}
 
 	public static String getGiByteF1(long addr) {

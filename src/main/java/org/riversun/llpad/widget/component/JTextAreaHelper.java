@@ -141,7 +141,7 @@ public class JTextAreaHelper {
 			final List<JTextAreaRowInfo> ri = textAreaInfo.rowInfoList;
 			for (int i = 0; i < ri.size(); i++) {
 				JTextAreaRowInfo r = ri.get(i);
-				LOGGER.finest("JTextAreaRowInfo[" + i + "]" + " " + r);
+				LOGGER.finest("#getCurrentVisibleArea JTextAreaRowInfo[" + i + "]" + " " + r);
 			}
 
 		}
