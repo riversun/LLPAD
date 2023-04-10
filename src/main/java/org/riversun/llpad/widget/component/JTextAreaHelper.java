@@ -157,7 +157,7 @@ public class JTextAreaHelper {
 
 	}
 
-	private JTextAreaInfo getTextAreaInfo(final JTextArea textArea) {
+	private JTextAreaInfo getTextAreaInfo(final DiagTextArea textArea) {
 
 		final JTextAreaInfo taInfo = new JTextAreaInfo();
 
@@ -223,7 +223,7 @@ public class JTextAreaHelper {
 		return taInfo;
 	}
 
-	public void showCursor(JTextArea textArea) {
+	public void showCursor(DiagTextArea textArea) {
 		textArea.requestFocus();
 		textArea.getCaret().setVisible(true);
 	}

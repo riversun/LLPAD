@@ -101,7 +101,13 @@ public class GUIBuilder {
 
   public GuiComponent getGuiComponent() {
     mComponent.textArea = mTextArea;
+    
+    if(AppDef.TextArea.USE_JTEXT_PANE) {
+      // - use JTextPane
+    }else {
+      // - use JTextArea
     mComponent.textAreaDocument = mTextArea.getDocument();
+    }
     mComponent.taBuilder = mTextAreaBuilder;
     mComponent.verticalSeekBar = mVerticalSeekBar;
     mComponent.frame = mFrame;

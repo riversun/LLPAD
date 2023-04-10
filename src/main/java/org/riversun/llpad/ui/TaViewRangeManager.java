@@ -291,11 +291,20 @@ public class TaViewRangeManager implements JTextAreaEventListener, ViewRangeEven
           // When seeking, write to another document
           // TODO It is more efficient to have this processing in a
           // {@see DiagTextArea}
-          mViews.textArea.setDocument(mTempDocument);
+          
+          if(AppDef.TextArea.USE_JTEXT_PANE) {
+          
+          }else {
+            mViews.textArea.setDocument(mTempDocument);  
+          }
           mViews.textArea.setText(text2disp.text);
 
         } else {
+          if(AppDef.TextArea.USE_JTEXT_PANE) {
+            
+          }else {
           mViews.textArea.setDocument(mViews.textAreaDocument);
+          }
           mViews.textArea.setText(text2disp.text);
 
         }

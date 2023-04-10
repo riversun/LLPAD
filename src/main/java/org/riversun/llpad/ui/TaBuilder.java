@@ -33,12 +33,11 @@ import java.awt.event.MouseWheelListener;
 import java.util.logging.Logger;
 
 import javax.swing.UIManager;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.StyledDocument;
 
 import org.riversun.llpad.AppDef;
 import org.riversun.llpad.fw.Disposable;
-import org.riversun.llpad.util.AddressFormatter;
 import org.riversun.llpad.widget.component.DiagTextArea;
 
 /**
@@ -91,7 +90,14 @@ public class TaBuilder implements Disposable {
     // mTextArea.setFont());
     mTextArea.setForeground(UIManager.getColor("Label.foreground"));
     mTextArea.setBackground(Color.white);
-    mTextArea.setLineWrap(true);
+    
+    if(AppDef.TextArea.USE_JTEXT_PANE) {
+      // mTextArea.setLineWrap(true);//  Enable line wrap in JTextArea      
+    }else {
+      
+    }
+
+  
     mTextArea.setOpaque(false);
     mTextArea.setEditable(false);
     mTextArea.setFocusable(true);
