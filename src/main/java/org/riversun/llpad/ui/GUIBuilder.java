@@ -229,6 +229,7 @@ public class GUIBuilder {
 
 				menubar.add(menuFile);
 
+				mMenuItemOpen.setUI(new NoIconMenuItemUI());
 				menuFile.add(mMenuItemOpen);
 
 				mFrame.setJMenuBar(menubar);
