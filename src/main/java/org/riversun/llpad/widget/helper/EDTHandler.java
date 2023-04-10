@@ -31,20 +31,22 @@ import javax.swing.SwingUtilities;
  * 
  * Event Dispatcher Thread Handler
  *
+ * Android's Handler-like
+ * 
  * @author Tom Misawa (riversun.org@gmail.com)
  */
 public class EDTHandler {
 
-	/**
-	 * Post runnable into UI thread
-	 * 
-	 * @param r
-	 */
-	public void post(Runnable r) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			r.run();
-		} else {
-			EventQueue.invokeLater(r);
-		}
-	}
+  /**
+   * Post runnable into UI thread
+   * 
+   * @param r
+   */
+  public void post(Runnable r) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      r.run();
+    } else {
+      EventQueue.invokeLater(r);
+    }
+  }
 }
