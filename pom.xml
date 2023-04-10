@@ -49,10 +49,17 @@
 	</properties>
 
 	<dependencies>
+		<!--
 		<dependency>
 			<groupId>org.riversun</groupId>
 			<artifactId>bigdoc</artifactId>
 			<version>0.3.0</version>
+		</dependency>
+		-->
+			<dependency>
+			<groupId>org.riversun</groupId>
+			<artifactId>finbin</artifactId>
+			<version>0.6.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.riversun</groupId>
